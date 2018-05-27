@@ -1,0 +1,29 @@
+dataType {
+	experiment			pulseCombustor;
+	combustorType		passive;
+	fuelType			liquid;
+	ionProbe			false;
+};
+
+dataConditioning {
+	SSA					false;
+	vectorDimensionM	10;
+	kMax				3;             
+	
+	windowSize			0.06;
+};
+
+dataAnalysis {
+    findPeaks         false;
+	averageCycle      false;
+	freqSpectrum      false;
+	spectrogram       false;
+	trackPeaks        false;
+	bodePlot          false;
+	compputeRMS       false;
+};
+
+output {
+	printFromOpen     false;
+};
+

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+clear
+
+rm datafileinput.o
+
+#g++-4.8 -std=c++11 -c datafileinput.cpp -o datafileinput.o 
+
+g++ -std=c++11 -c menu.cpp -o menu.o 
+
+ar rvs menu.a menu.o
+
+mv menu.a libmenu.a
+
+sudo cp libmenu.a /usr/local/lib/
+sudo cp menu.h /usr/local/include/

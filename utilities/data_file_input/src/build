@@ -1,0 +1,14 @@
+#!/bin/bash
+
+rm datafileinput.o
+
+#g++-4.8 -std=c++11 -c datafileinput.cpp -o datafileinput.o 
+
+g++ -std=c++11 -c datafileinput.cpp -o datafileinput.o 
+
+ar rvs datafileinput.a datafileinput.o
+
+mv datafileinput.a libdatafileinput.a
+
+sudo cp libdatafileinput.a /usr/local/lib/
+sudo cp datafileinput.h /usr/local/include/
