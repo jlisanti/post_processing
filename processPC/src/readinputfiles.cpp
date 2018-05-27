@@ -122,6 +122,10 @@ void read_settings_file(std::string file,
 					optionsMenu.dataAnalysisMenu.freqSpectrum=value;
 				if(setting=="spectrogram")
 					optionsMenu.dataAnalysisMenu.spectrogram=value;
+				if(setting=="spectNcyclesWindow")
+					optionsMenu.dataAnalysisMenu.spectNcyclesWindow=atof(value.c_str());
+				if(setting=="spectNcyclesSpace")
+					optionsMenu.dataAnalysisMenu.spectNcyclesSpace=atof(value.c_str());
 				if(setting=="trackPeaks")
 					optionsMenu.dataAnalysisMenu.trackPeaks=value;
 				if(setting=="bodePlot")

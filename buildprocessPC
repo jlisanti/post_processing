@@ -1,0 +1,6 @@
+#!/bin/bash
+
+cd ./processPC/src/
+make clean
+make
+./copy

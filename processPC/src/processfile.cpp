@@ -19,10 +19,10 @@
 #include "smoothencoder.h"
 #include "curvefit.h"
 #include "findroots.h"
+#include "spectrogram.h"
 
 /*
 #include "computemass.h"
-#include "spectrogram.h"
 #include "trackpeaks.h"
 */
 
@@ -34,7 +34,6 @@ void process_file(std::string file, output_data &output, options &optionsMenu)
 	int skipLines = 0;
 	read_header_file_data(file,output,skipLines);
 	DataFileInput cInput(file,skipLines);
-	std::cout << "skiplines: " <<  skipLines << std::endl;
 
 	if(optionsMenu.dataCondMenu.SSA=="true")
 		ssa(cInput,
@@ -55,27 +54,24 @@ void process_file(std::string file, output_data &output, options &optionsMenu)
 
 	if(optionsMenu.mainMenu.combustorType=="passive")
 	{
-		std::cout << "Computing p_rms..." << std::endl;
 		output.p_rms = compute_prms(cInput,output.p_static);
 
-		std::cout << "Computing freq..." << std::endl;
 		compute_frequency_spectrum(cInput,
 								   output.spectrum_magnitude,
                                    output.spectrum_frequency,
                                    output.combustor_frequency);
 
-		std::cout << "Average cycle passive..." << std::endl;
-		 average_cycle_passive(cInput,
-							   1,
-							   2,
-							   0.02,
-							   output.position_vector_smooth,
-							   output.pressure_vector_smooth,
-							   output.ion_vector_smooth,
-							   output.position_scatter,
-							   output.pressure_scatter,
-							   output.ion_scatter,
-							   output.static_pressure);
+		average_cycle_passive(cInput,
+							  1,
+							  2,
+							  0.02,
+							  output.position_vector_smooth,
+							  output.pressure_vector_smooth,
+							  output.ion_vector_smooth,
+							  output.position_scatter,
+							  output.pressure_scatter,
+							  output.ion_scatter,
+							  output.static_pressure);
 
 		find_min(output.position_vector_smooth,
 				 output.pressure_vector_smooth,
@@ -86,6 +82,15 @@ void process_file(std::string file, output_data &output, options &optionsMenu)
 				 output.pressure_vector_smooth,
 				 output.pressure_max,
 				 output.phase_max);
+
+		build_spectrogram(cInput,
+						  output.combustor_frequency,
+						  output.spectrogram_f,
+						  output.spectrogram_m,
+						  optionsMenu.dataAnalysisMenu.spectNcyclesSpace,
+						  optionsMenu.dataAnalysisMenu.spectNcyclesWindow,
+						  output.spectrogram_n,
+						  output.time);
 	}
 	else if(optionsMenu.mainMenu.combustorType=="active")
 	{
@@ -325,11 +330,9 @@ void read_header_file_data(std::string file, output_data &output, int &skip_line
             std::vector<double> t;
 
             while(std::getline(ss, token, ':')) {
-                std::cout << token << std::endl;
                 t.push_back(std::stod(token));
             }
 
-            std::cout << "time " << t[0] << ":" << t[1] << ":" << t[2] << std::endl;
             double tmp = t[0]*60*60 + t[1]*60.0 + t[2];
 
             output.acquisition_time = tmp;

@@ -2,7 +2,7 @@
 
 clear
 
-rm datafileinput.o
+rm menu.o
 
 #g++-4.8 -std=c++11 -c datafileinput.cpp -o datafileinput.o 
 

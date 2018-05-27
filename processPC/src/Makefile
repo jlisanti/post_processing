@@ -10,19 +10,25 @@ ifeq ($(UNAME), Linux)
 CC := g++-4.8
 endif
 
-LDFLAGS := -L/usr/local/lib -I/usr/local/include \
-           -I/Users/joellisanti/Documents/programSourceFiles/boost_1_57_0
+LDFLAGS := -L/usr/local/lib \
+           -I/usr/local/include \
+           -I/Users/jlisanti/Documents/program_sources/boost_1_67_0 \
+		   -I/Users/mohammadqatomah/boost_1_67_0 \
+		   -L/opt/local/lib \
+           -I/opt/local/include \
+
+
 LDLIBS := -ldatafileinput -lgsl -lgslcblas -lm -lmenu
 CFLAGS := -Wall -DHAVE_INLINE -v -std=c++11
 
 
 SRC = main.cpp readinputfiles.cpp processfile.cpp computerms.cpp ssa.cpp \
 	  averagecycle.cpp smoothencoder.cpp fft.cpp scatterplot.cpp curvefit.cpp \
-	  findroots.cpp printoutput.cpp
+	  findroots.cpp printoutput.cpp spectrogram.cpp
 
 OBJ = main.o readinputfiles.o processfile.o computerms.o ssa.o \
 	  averagecycle.o smoothencoder.o fft.o scatterplot.o curvefit.o \
-	  findroots.o printoutput.o
+	  findroots.o printoutput.o spectrogram.o
 
 processPC: $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) $(LDFLAGS) -o processPC $(LDLIBS)
@@ -50,6 +56,8 @@ findroots.o: findroots.cpp
 	$(CC) $(CFLAGS) $(LDFLAGS) -c findroots.cpp -o $@ $(LDLIBS)
 printoutput.o: printoutput.cpp 
 	$(CC) $(CFLAGS) $(LDFLAGS) -c printoutput.cpp -o $@ $(LDLIBS)
+spectrogram.o: spectrogram.cpp 
+	$(CC) $(CFLAGS) $(LDFLAGS) -c spectrogram.cpp -o $@ $(LDLIBS)
 
 .PHONY: clean
 clean:

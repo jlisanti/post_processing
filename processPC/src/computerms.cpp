@@ -13,7 +13,6 @@ double compute_prms(DataFileInput &cInput, double mean)
     for (int i = 0; i < nn; i++)
         data[i] = cInput.table_value(i,1);
 
-    delete[] data;
-
     return sqrt(gsl_stats_variance(data, 1, nn));
+    //delete[] data;
 }

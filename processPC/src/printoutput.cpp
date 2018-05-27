@@ -357,6 +357,9 @@ void print_output_passive (output_data &output)
     std::string averaged_file = convert.str() + "Hz_" + convert1.str() + "C_scatter.dat";
     std::string averaged_curve = convert.str() + "Hz_" + convert1.str() + "C_averaged.dat";
 
+    std::string spectrum_file = convert.str() + "Hz_" + convert1.str() + "C_spectrum.dat";
+    std::string spectrogram_file = convert.str() + "Hz_" + convert1.str() + "C_spectrogram.dat";
+
 
 	for (int i = 0; i < 100; i++)
 	{
@@ -512,6 +515,27 @@ void print_output_passive (output_data &output)
 		  << std::setw(12) << output.CO << '\t'
 		  << std::setw(12) << output.CO2 << '\t'
 		  << std::setw(12) << output.O2 << std::endl;
+
+	std::ofstream fout4(spectrum_file);
+    for (int i = 0; i < output.spectrum_magnitude.size(); i++)
+        fout4 << output.spectrum_frequency[i] << '\t'
+              << output.spectrum_magnitude[i] << std::endl;
+
+    std::cout << "about to print spetrogram" << std::endl;
+
+    std::ofstream fout5(spectrogram_file);
+    for (int i = 0; i < output.time.size(); i++)
+    {
+        for (int j = 0; j < output.spectrogram_n; j++)
+        {
+            fout5 << output.time[i] << '\t'
+                  << output.spectrogram_f[i][j] << '\t'
+                  << output.spectrogram_m[i][j] << std::endl;
+        }
+        fout5 << std::endl;
+    }
+
+
 
 	/*
 

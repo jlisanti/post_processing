@@ -14,13 +14,21 @@ dataConditioning {
 };
 
 dataAnalysis {
-    findPeaks         false;
-	averageCycle      false;
-	freqSpectrum      false;
-	spectrogram       false;
-	trackPeaks        false;
-	bodePlot          false;
-	compputeRMS       true;
+    findPeaks			false;
+
+	averageCycle		true;
+
+	freqSpectrum		true;
+
+	spectrogram			true;
+	spectNcyclesWindow  3;
+	spectNcyclesSpace	0.5;
+
+	trackPeaks			false;
+
+	bodePlot			false;
+
+	compputeRMS			true;
 };
 
 output {

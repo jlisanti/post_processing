@@ -25,6 +25,8 @@ struct data_analysis_menu {
 	std::string averageCycle;
 	std::string freqSpectrum;
 	std::string spectrogram;
+	double spectNcyclesWindow;
+	double spectNcyclesSpace;
 	std::string trackPeaks;
 	std::string bodePlots;
 	std::string computeRMS;
