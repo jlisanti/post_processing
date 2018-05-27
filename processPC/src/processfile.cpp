@@ -83,14 +83,15 @@ void process_file(std::string file, output_data &output, options &optionsMenu)
 				 output.pressure_max,
 				 output.phase_max);
 
-		build_spectrogram(cInput,
-						  output.combustor_frequency,
-						  output.spectrogram_f,
-						  output.spectrogram_m,
-						  optionsMenu.dataAnalysisMenu.spectNcyclesSpace,
-						  optionsMenu.dataAnalysisMenu.spectNcyclesWindow,
-						  output.spectrogram_n,
-						  output.time);
+		if(optionsMenu.dataAnalysisMenu.spectrogram=="true")
+			build_spectrogram(cInput,
+							  output.combustor_frequency,
+							  output.spectrogram_f,
+						      output.spectrogram_m,
+						      optionsMenu.dataAnalysisMenu.spectNcyclesSpace,
+						      optionsMenu.dataAnalysisMenu.spectNcyclesWindow,
+						      output.spectrogram_n,
+						      output.time);
 	}
 	else if(optionsMenu.mainMenu.combustorType=="active")
 	{

@@ -7,6 +7,7 @@
 
 #include "processfile.h"
 #include "datafileinput.h"
+#include "readinputfiles.h"
 #include "printoutput.h"
 #include "averagecycle.h"
 
@@ -340,7 +341,7 @@ void print_output_active (output_data &output)
 			  */
 }
 
-void print_output_passive (output_data &output)
+void print_output_passive (output_data &output, options &optionsMenu)
 {
 	double round_comb_freq = round_value(output.combustor_frequency,5);
 	std::string file_name;
@@ -521,6 +522,8 @@ void print_output_passive (output_data &output)
         fout4 << output.spectrum_frequency[i] << '\t'
               << output.spectrum_magnitude[i] << std::endl;
 
+	if(optionsMenu.dataAnalysisMenu.spectrogram=="true")
+	{
     std::cout << "about to print spetrogram" << std::endl;
 
     std::ofstream fout5(spectrogram_file);
@@ -534,6 +537,7 @@ void print_output_passive (output_data &output)
         }
         fout5 << std::endl;
     }
+	}
 
 
 
