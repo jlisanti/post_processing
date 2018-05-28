@@ -24,11 +24,11 @@ CFLAGS := -Wall -DHAVE_INLINE -v -std=c++11
 
 SRC = main.cpp readinputfiles.cpp processfile.cpp computerms.cpp ssa.cpp \
 	  averagecycle.cpp smoothencoder.cpp fft.cpp scatterplot.cpp curvefit.cpp \
-	  findroots.cpp printoutput.cpp spectrogram.cpp
+	  findroots.cpp printoutput.cpp spectrogram.cpp trackpeaks.cpp
 
 OBJ = main.o readinputfiles.o processfile.o computerms.o ssa.o \
 	  averagecycle.o smoothencoder.o fft.o scatterplot.o curvefit.o \
-	  findroots.o printoutput.o spectrogram.o
+	  findroots.o printoutput.o spectrogram.o trackpeaks.o
 
 processPC: $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) $(LDFLAGS) -o processPC $(LDLIBS)
@@ -58,6 +58,8 @@ printoutput.o: printoutput.cpp
 	$(CC) $(CFLAGS) $(LDFLAGS) -c printoutput.cpp -o $@ $(LDLIBS)
 spectrogram.o: spectrogram.cpp 
 	$(CC) $(CFLAGS) $(LDFLAGS) -c spectrogram.cpp -o $@ $(LDLIBS)
+trackpeaks.o: trackpeaks.cpp 
+	$(CC) $(CFLAGS) $(LDFLAGS) -c trackpeaks.cpp -o $@ $(LDLIBS)
 
 .PHONY: clean
 clean:

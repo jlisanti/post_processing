@@ -20,10 +20,10 @@
 #include "curvefit.h"
 #include "findroots.h"
 #include "spectrogram.h"
+#include "trackpeaks.h"
 
 /*
 #include "computemass.h"
-#include "trackpeaks.h"
 */
 
 void process_file(std::string file, output_data &output, options &optionsMenu)
@@ -83,6 +83,12 @@ void process_file(std::string file, output_data &output, options &optionsMenu)
 				 output.pressure_max,
 				 output.phase_max);
 
+		if(optionsMenu.mainMenu.ionProbe=="true")
+			find_min(output.position_vector_smooth,
+					 output.ion_vector_smooth,
+					 output.ion_min,
+					 output.ion_phase);
+
 		if(optionsMenu.dataAnalysisMenu.spectrogram=="true")
 			build_spectrogram(cInput,
 							  output.combustor_frequency,
@@ -92,6 +98,27 @@ void process_file(std::string file, output_data &output, options &optionsMenu)
 						      optionsMenu.dataAnalysisMenu.spectNcyclesWindow,
 						      output.spectrogram_n,
 						      output.time);
+		if(optionsMenu.dataAnalysisMenu.trackPeaks=="true")
+			track_peaks(cInput,
+						output.pressure_vector_smooth,
+						output.encoder_vector_smooth,
+						output.ion_vector_smooth,
+						1,
+						1,
+						3,
+						0,
+						output.e_max_p,
+						output.e_min_p,
+						output.e_max_i,
+						output.e_min_i,
+						output.t_max_p,
+						output.t_min_p,
+						output.t_max_i,
+						output.t_min_i,
+						output.p_max,
+					    output.p_min,
+						output.i_max,
+						output.i_min);
 	}
 	else if(optionsMenu.mainMenu.combustorType=="active")
 	{
