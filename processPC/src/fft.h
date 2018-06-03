@@ -6,6 +6,7 @@
 void compute_frequency_spectrum(DataFileInput &cInput,
 		                        std::vector<double> &magnitude,
 								std::vector<double> &frequency,
+								int col,
 								double &peak_frequency);
 
 

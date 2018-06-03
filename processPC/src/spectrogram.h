@@ -12,6 +12,7 @@ void build_spectrogram(DataFileInput &cInput,
 					   double numberCyclesSpace,
 					   double numberCyclesWindow,
 					   int &n,
+					   int col,
 					   std::vector<double> &time);
 
 

@@ -17,6 +17,7 @@ void build_spectrogram(DataFileInput &cInput,
 								double numberCyclesSpace,
 								double numberCyclesWindow,
 								int &n,
+								int col,
 								std::vector<double> &time)
 {
 	/* Choose window size
@@ -35,6 +36,7 @@ void build_spectrogram(DataFileInput &cInput,
 	double spacing = numberCyclesSpace*(1.0/freq);
 	double window  = numberCyclesWindow*(1.0/freq);
 
+	std::cout << "spectrogram specs = " << std::endl;
 	std::cout << 1.0/freq << '\t' << spacing << '\t' << window << std::endl;
 
 	n = ceil(window/dt);
@@ -55,7 +57,7 @@ void build_spectrogram(DataFileInput &cInput,
 		{
 			//std::cout << i << std::endl;
 			timestep[i] = cInput.table_value(current_i+i,0);
-			pressure[i] = cInput.table_value(current_i+i,1);
+			pressure[i] = cInput.table_value(current_i+i,col);
 		}
 		time.push_back(cInput.table_value(current_i,0));
 		//std::cout << "time " << time[k] << std::endl;

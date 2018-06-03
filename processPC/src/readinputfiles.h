@@ -10,6 +10,10 @@ struct main_menu {
 	std::string combustorType;
 	std::string fuelType;
 	std::string ionProbe;
+	double gasoline;
+	double heptane;
+	double ethanol;
+	double diseal;
 };
 
 

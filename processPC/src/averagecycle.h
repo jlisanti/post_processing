@@ -25,6 +25,8 @@ void average_cycle_passive(DataFileInput &cInput,
 						   std::vector<double> &position_scatter,
 						   std::vector<double> &pressure_scatter,
 						   std::vector<double> &ion_scatter,
+						   std::vector<double> &down_cross_over,
+						   std::vector<double> &up_cross_over,
                            double static_pressure);
 
 #endif

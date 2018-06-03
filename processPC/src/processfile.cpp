@@ -59,7 +59,14 @@ void process_file(std::string file, output_data &output, options &optionsMenu)
 		compute_frequency_spectrum(cInput,
 								   output.spectrum_magnitude,
                                    output.spectrum_frequency,
+								   1,
                                    output.combustor_frequency);
+
+		compute_frequency_spectrum(cInput,
+								   output.ion_spectrum_magnitude,
+                                   output.ion_spectrum_frequency,
+								   2,
+                                   output.ion_frequency);
 
 		average_cycle_passive(cInput,
 							  1,
@@ -71,6 +78,8 @@ void process_file(std::string file, output_data &output, options &optionsMenu)
 							  output.position_scatter,
 							  output.pressure_scatter,
 							  output.ion_scatter,
+							  output.downCrossOver,
+							  output.upCrossOver,
 							  output.static_pressure);
 
 		find_min(output.position_vector_smooth,
@@ -90,6 +99,7 @@ void process_file(std::string file, output_data &output, options &optionsMenu)
 					 output.ion_phase);
 
 		if(optionsMenu.dataAnalysisMenu.spectrogram=="true")
+		{
 			build_spectrogram(cInput,
 							  output.combustor_frequency,
 							  output.spectrogram_f,
@@ -97,20 +107,26 @@ void process_file(std::string file, output_data &output, options &optionsMenu)
 						      optionsMenu.dataAnalysisMenu.spectNcyclesSpace,
 						      optionsMenu.dataAnalysisMenu.spectNcyclesWindow,
 						      output.spectrogram_n,
+							  1,
 						      output.time);
+
+			build_spectrogram(cInput,
+							  output.combustor_frequency,
+							  output.ion_spectrogram_f,
+						      output.ion_spectrogram_m,
+						      optionsMenu.dataAnalysisMenu.spectNcyclesSpace,
+						      optionsMenu.dataAnalysisMenu.spectNcyclesWindow,
+						      output.spectrogram_n,
+							  2,
+						      output.ion_time);
+		}
 		if(optionsMenu.dataAnalysisMenu.trackPeaks=="true")
 			track_peaks(cInput,
-						output.pressure_vector_smooth,
-						output.encoder_vector_smooth,
-						output.ion_vector_smooth,
+						output.pressure_vector,
+						output.ion_vector,
 						1,
-						1,
-						3,
+						2,
 						0,
-						output.e_max_p,
-						output.e_min_p,
-						output.e_max_i,
-						output.e_min_i,
 						output.t_max_p,
 						output.t_min_p,
 						output.t_max_i,
@@ -118,7 +134,10 @@ void process_file(std::string file, output_data &output, options &optionsMenu)
 						output.p_max,
 					    output.p_min,
 						output.i_max,
-						output.i_min);
+						output.i_min,
+						output.downCrossOver,
+						output.upCrossOver);
+
 	}
 	else if(optionsMenu.mainMenu.combustorType=="active")
 	{
@@ -127,109 +146,9 @@ void process_file(std::string file, output_data &output, options &optionsMenu)
 	{
 	}
 
-		/*
-
-	std::cout << "Averaging cycle..." << std::endl;
-	std::cout << "endcoder: " << encoder_colmn << std::endl;
-	output.encoder_colmn = encoder_colmn;
-	average_cycle(cInput,
-			      output.time_ssa,
-				  output.pressure_ssa,
-				  output.ion_ssa,
-			      encoder_colmn,
-				  1,
-				  output.window,
-				  output.encoder_vector_smooth,
-				  output.pressure_vector_smooth,
-				  output.ion_vector_smooth,
-				  output.pressure_scatter,
-				  output.encoder_scatter,
-				  output.ion_scatter);
-				  */
-	/*
-		*/
-	/*
-	std::cout << encoder_colmn << std::endl;
-	std::cout << "Fitting poly..." << std::endl;
-
-	
-	find_min(output.encoder_vector_smooth,
-			 output.pressure_vector_smooth,
-			 output.pressure_min,
-			 output.phase_min);
-
-	find_max(output.encoder_vector_smooth,
-			 output.pressure_vector_smooth,
-			 output.pressure_max,
-			 output.phase_max);
-
-	find_min(output.encoder_vector_smooth,
-			 output.ion_vector_smooth,
-			 output.ion_min,
-			 output.ion_phase);
-
-	build_spectrogram(cInput,
-			          output.combustor_frequency,
-					  output.spectrogram_f,
-					  output.spectrogram_m,
-					  output.spectrogram_n,
-					  output.dt,
-					  output.time);
-					  */
-	/*
-	track_peaks(cInput,
-			    output.pressure_vector_smooth,
-				output.encoder_vector_smooth,
-				output.ion_vector_smooth,
-			    encoder_colmn,
-				1,
-				3,
-				0,
-				output.e_max_p,
-				output.e_min_p,
-				output.e_max_i,
-				output.e_min_i,
-				output.t_max_p,
-				output.t_min_p,
-				output.t_max_i,
-				output.t_min_i,
-				output.p_max,
-				output.p_min,
-				output.i_max,
-				output.i_min);
-				*/
-
-
-	/*
-	for (int i = 0; i < output.encoder_vector_smooth.size(); i++)
-		std::cout << output.encoder_vector_smooth[i] << std::endl;
-		*/
-
 	std::cout << "Exiting proccessfile..." << std::endl;
-
-
-	/*
-	compute_mass_flow_rate(output.pressure_vector_smooth,
-			               output.encoder_vector_smooth,
-						   output.mass_flow_rate_fuel_1,
-						   output.mass_flow_rate_fuel_2,
-						   19.6/2000.0,
-						   23.0/2000.0,
-						   40.0/1000.0,
-						   output.combustor_frequency,
-						   output.mdot_air,
-						   output.phi,
-						   output.AF_ratio,
-						   output.mdot_inlet,
-						   output.area_inlet,
-						   output.area_inlet_2);
-						   */
-	/*
-	curve_fit(output.encoder_vector_smooth, 
-			 output.pressure_vector_smooth,
-    		 output.coefficients);
-			 */
 }
+
 
 void read_header_file_data(std::string file, output_data &output, int &skip_lines)
 {

@@ -70,6 +70,14 @@ void read_settings_file(std::string file,
 					optionsMenu.mainMenu.fuelType=value;
 				if(setting=="ionProbe")
 					optionsMenu.mainMenu.ionProbe=value;
+				if(setting=="gasoline")
+					optionsMenu.mainMenu.gasoline=atof(value.c_str());
+				if(setting=="heptane")
+					optionsMenu.mainMenu.heptane=atof(value.c_str());
+				if(setting=="ethanol")
+					optionsMenu.mainMenu.ethanol=atof(value.c_str());
+				if(setting=="diseal")
+					optionsMenu.mainMenu.diseal=atof(value.c_str());
 			}
 		}
 

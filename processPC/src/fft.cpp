@@ -11,6 +11,7 @@
 void compute_frequency_spectrum(DataFileInput &cInput,
 		                        std::vector<double> &magnitude,
 								std::vector<double> &frequency,
+								int col,
 								double &peak_frequency)
 {
 
@@ -24,7 +25,7 @@ void compute_frequency_spectrum(DataFileInput &cInput,
 	for (int i = 0; i < n; i++)
 	{
 		timestep[i] = cInput.table_value(i,0);
-		pressure[i] = cInput.table_value(i,1);
+		pressure[i] = cInput.table_value(i,col);
 	}
 
 	/* NOT SURE WHY THIS DOES NOT WORK - GIVES STRANGE ERROR
@@ -54,6 +55,8 @@ void compute_frequency_spectrum(DataFileInput &cInput,
 	}
 
 	magnitude[0] = 0.0;
+	magnitude[1] = 0.0;
+	magnitude[2] = 0.0;
 	
 	auto it = std::max_element(std::begin(magnitude), std::end(magnitude));
 	int index = std::distance(std::begin(magnitude), it);

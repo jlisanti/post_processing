@@ -220,6 +220,7 @@ void print_output_active (output_data &output)
 			  //<< std::setw(10) << "phase" << '\t'
 			  //<< std::setw(10) << "pulse_width" << '\t'
 			  << std::setw(12) << "Fuel_pres" << '\t'
+			  << std::setw(12) << "delP" << '\t'
 			  << std::setw(12) << "Po" << '\t'
 			  << std::setw(12) << "To" << '\t'
 			  << std::setw(12) << "P_rms" << '\t'
@@ -256,6 +257,7 @@ void print_output_active (output_data &output)
 		  //<< std::setw(12) << output.fuel_injection_pulse_width << '\t' 
 		  << std::setw(12) << output.fuel_pressure << '\t' 
 		  << std::setw(12) << output.total_pressure << '\t' 
+		  << std::setw(12) << 1.0+(output.total_pressure/output.p_static) << '\t' 
 		  << std::setw(12) << output.total_temperature << '\t'
 		  << std::setw(12) << output.p_rms << '\t' 
 		  << std::setw(12) << output.ion_phase << '\t'
@@ -360,6 +362,12 @@ void print_output_passive (output_data &output, options &optionsMenu)
 
     std::string spectrum_file = convert.str() + "Hz_" + convert1.str() + "C_spectrum.dat";
     std::string spectrogram_file = convert.str() + "Hz_" + convert1.str() + "C_spectrogram.dat";
+	
+    std::string p_max_peaks_file = convert.str() + "Hz_" + convert1.str() + "C_p_max_peaks.dat";
+    std::string i_max_peaks_file = convert.str() + "Hz_" + convert1.str() + "C_i_max_peaks.dat";
+
+    std::string p_min_peaks_file = convert.str() + "Hz_" + convert1.str() + "C_p_min_peaks.dat";
+    std::string i_min_peaks_file = convert.str() + "Hz_" + convert1.str() + "C_i_min_peaks.dat";
 
 
 	for (int i = 0; i < 100; i++)
@@ -485,7 +493,11 @@ void print_output_passive (output_data &output, options &optionsMenu)
 			  << std::setw(12) << "NOx" << '\t'
 			  << std::setw(12) << "CO" << '\t'
 			  << std::setw(12) << "CO2" << '\t'
-			  << std::setw(12) << "O2" << std::endl;  
+			  << std::setw(12) << "O2" << '\t' 
+			  << std::setw(12) << "gasoline" << '\t'
+			  << std::setw(12) << "heptane" << '\t'
+			  << std::setw(12) << "ethanol" << '\t'
+			  << std::setw(12) << "diseal" << std::endl;  
 
 	}
 	
@@ -519,38 +531,54 @@ void print_output_passive (output_data &output, options &optionsMenu)
 		  << std::setw(12) << output.NOx << '\t'
 		  << std::setw(12) << output.CO << '\t'
 		  << std::setw(12) << output.CO2 << '\t'
-		  << std::setw(12) << output.O2 << std::endl;
+		  << std::setw(12) << output.O2 << '\t' 
+		  << std::setw(12) << optionsMenu.mainMenu.gasoline << '\t'
+		  << std::setw(12) << optionsMenu.mainMenu.heptane << '\t'
+		  << std::setw(12) << optionsMenu.mainMenu.ethanol << '\t'
+		  << std::setw(12) << optionsMenu.mainMenu.diseal << std::endl; 
 
 	std::ofstream fout4(spectrum_file);
     for (int i = 0; i < output.spectrum_magnitude.size(); i++)
         fout4 << output.spectrum_frequency[i] << '\t'
-              << output.spectrum_magnitude[i] << std::endl;
+              << output.spectrum_magnitude[i] 
+			  << output.ion_spectrum_frequency[i] << '\t'
+			  << output.ion_spectrum_magnitude[i] << std::endl;
 
 	if(optionsMenu.dataAnalysisMenu.spectrogram=="true")
 	{
-    std::cout << "about to print spetrogram" << std::endl;
-
-    std::ofstream fout5(spectrogram_file);
-    for (int i = 0; i < output.time.size(); i++)
-    {
-        for (int j = 0; j < output.spectrogram_n; j++)
+        std::ofstream fout5(spectrogram_file);
+        for (int i = 0; i < output.time.size(); i++)
         {
-            fout5 << output.time[i] << '\t'
-                  << output.spectrogram_f[i][j] << '\t'
-                  << output.spectrogram_m[i][j] << std::endl;
+            for (int j = 0; j < output.spectrogram_n; j++)
+            {
+                fout5 << output.time[i] << '\t'
+                      << output.spectrogram_f[i][j] << '\t'
+                      << output.spectrogram_m[i][j] << '\t' 
+                      << output.ion_time[i] << '\t' 
+				      << output.ion_spectrogram_f[i][j] << '\t'
+				      << output.ion_spectrogram_m[i][j] << std::endl;
+            }
+            fout5 << std::endl;
         }
-        fout5 << std::endl;
-    }
 	}
 
+	std::ofstream fout6(p_max_peaks_file);
+	for (int i = 0; i < output.p_max.size(); i++)
+		fout6 << output.t_max_p[i] << '\t'
+			  << output.p_max[i] << std::endl;
 
+	std::ofstream fout7(p_min_peaks_file);
+	for (int i = 0; i < output.p_min.size(); i++)
+		fout7 << output.t_min_p[i] << '\t'
+			  << output.p_min[i] << std::endl;
 
-	/*
+	std::ofstream fout8(i_max_peaks_file);
+	for (int i = 0; i < output.i_max.size(); i++)
+		fout8 << output.t_max_i[i] << '\t'
+			  << output.i_max[i] << std::endl;
 
-	std::ofstream fout4("pressure_scatter.dat");
-	for (int i = 1; i < output.position_scatter.size()-1; i++)
-		fout4 << output.position_scatter[i] << '\t'
-			  << output.pressure_scatter[i] << '\t'
-			  << output.ion_scatter[i] << std::endl;
-			  */
+	std::ofstream fout9(i_min_peaks_file);
+	for (int i = 0; i < output.i_min.size(); i++)
+		fout9 << output.t_min_i[i] << '\t'
+			  << output.i_min[i] << std::endl;
 }
