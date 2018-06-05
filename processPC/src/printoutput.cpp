@@ -369,6 +369,9 @@ void print_output_passive (output_data &output, options &optionsMenu)
     std::string p_min_peaks_file = convert.str() + "Hz_" + convert1.str() + "C_p_min_peaks.dat";
     std::string i_min_peaks_file = convert.str() + "Hz_" + convert1.str() + "C_i_min_peaks.dat";
 
+    std::string peaks_file = convert.str() + "Hz_" + convert1.str() + "C_peaks.dat";
+
+
 
 	for (int i = 0; i < 100; i++)
 	{
@@ -540,7 +543,7 @@ void print_output_passive (output_data &output, options &optionsMenu)
 	std::ofstream fout4(spectrum_file);
     for (int i = 0; i < output.spectrum_magnitude.size(); i++)
         fout4 << output.spectrum_frequency[i] << '\t'
-              << output.spectrum_magnitude[i] 
+              << output.spectrum_magnitude[i] << '\t' 
 			  << output.ion_spectrum_frequency[i] << '\t'
 			  << output.ion_spectrum_magnitude[i] << std::endl;
 
@@ -562,6 +565,20 @@ void print_output_passive (output_data &output, options &optionsMenu)
         }
 	}
 
+
+	if (!file_exists(peaks_file))
+	{
+	    std::ofstream fout10(peaks_file);
+	    for (int i = 0; i < output.p_max.size(); i++)
+		    fout10 << output.t_max_p[i] << '\t'
+			       << output.p_max[i]   << '\t'
+			       << output.t_min_p[i] << '\t'
+			       << output.p_min[i]   << '\t'
+			       << output.t_min_i[i] << '\t'
+			       << output.i_min[i]   << std::endl;
+	}
+
+	/*
 	std::ofstream fout6(p_max_peaks_file);
 	for (int i = 0; i < output.p_max.size(); i++)
 		fout6 << output.t_max_p[i] << '\t'
@@ -581,4 +598,5 @@ void print_output_passive (output_data &output, options &optionsMenu)
 	for (int i = 0; i < output.i_min.size(); i++)
 		fout9 << output.t_min_i[i] << '\t'
 			  << output.i_min[i] << std::endl;
+			  */
 }
