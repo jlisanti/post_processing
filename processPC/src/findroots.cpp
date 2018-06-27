@@ -116,7 +116,7 @@ void find_max(std::vector<double> x_col,
 	auto it = std::max_element(std::begin(y_col), std::end(y_col));
 	int index = std::distance(std::begin(y_col), it);
 
-	int window = 10;
+	int window = 20;
 	int p = 3;
 	double chisq;
 
@@ -154,7 +154,7 @@ void find_max(std::vector<double> x_col,
 	double B = gsl_vector_get (c,1);
 	double C = gsl_vector_get (c,2);
 
-	std::ofstream fout("min_fit.dat");
+	std::ofstream fout("max_fit.dat");
 	for (int i = 0; i < n; i++)
 	{
 		double fit = 0.0;
@@ -225,7 +225,7 @@ void find_min(std::vector<double> x_col,
 	auto it = std::min_element(std::begin(y_col), std::end(y_col));
 	int index = std::distance(std::begin(y_col), it);
 
-	int window = 5;
+	int window = 20;
 	int p = 3;
 	double chisq;
 
@@ -263,7 +263,7 @@ void find_min(std::vector<double> x_col,
 	double B = gsl_vector_get (c,1);
 	double C = gsl_vector_get (c,2);
 
-	std::ofstream fout("max_fit.dat");
+	std::ofstream fout("min_fit.dat");
 	for (int i = 0; i < n; i++)
 	{
 		double fit = 0.0;

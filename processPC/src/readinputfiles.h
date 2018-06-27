@@ -13,7 +13,7 @@ struct main_menu {
 	double gasoline;
 	double heptane;
 	double ethanol;
-	double diseal;
+	double diesel;
 };
 
 
@@ -22,6 +22,7 @@ struct data_conditioning_menu {
 	int vectorDimensionM;
 	int kMax;
 	double windowSize;
+	double stepSize;
 };
 
 struct data_analysis_menu {

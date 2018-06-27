@@ -89,3 +89,10 @@ void Menu::display_menu(std::string menu)
 	for (int i = 0; i < m_menus[menu].size(); i++)
 		std::cout << "[" << i << "] " << m_menus[menu][i] << std::endl;
 }
+
+std::string Menu::get_response()
+{
+	std::string tmp;
+	std::cin >> tmp; 
+	return tmp;
+}

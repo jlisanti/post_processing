@@ -35,12 +35,15 @@ typedef struct {
 	std::vector<double> ion_vector_smooth;
 	std::vector<double> pressure_scatter;
 	std::vector<double> encoder_scatter;
-	std::vector<double> position_vector_smooth;
-	std::vector<double> position_scatter;
+	std::vector<double> phase_vector_smooth;
+	std::vector<double> time_vector_smooth;
+	std::vector<double> phase_scatter;
+	std::vector<double> time_scatter;
 	std::vector<double> ion_scatter;
 	std::vector<double> coefficients;
 	std::vector<double> ion_vector;
-	std::vector<double> position_vector;
+	std::vector<double> phase_vector;
+	std::vector<double> time_vector;
 	std::vector<double> encoder_vector;
 	std::vector<double> pressure_vector;
 	std::vector<double> upCrossOver;

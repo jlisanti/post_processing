@@ -71,32 +71,41 @@ void process_file(std::string file, output_data &output, options &optionsMenu)
 		average_cycle_passive(cInput,
 							  1,
 							  2,
-							  0.02,
-							  output.position_vector_smooth,
+							  optionsMenu.dataCondMenu.windowSize,
+							  optionsMenu.dataCondMenu.stepSize,
+							  output.phase_vector_smooth,
+							  output.time_vector_smooth,
 							  output.pressure_vector_smooth,
 							  output.ion_vector_smooth,
-							  output.position_scatter,
+							  output.phase_scatter,
+							  output.time_scatter,
 							  output.pressure_scatter,
 							  output.ion_scatter,
 							  output.downCrossOver,
 							  output.upCrossOver,
-							  output.static_pressure);
+							  output.combustor_frequency,
+							  output.static_pressure,
+							  optionsMenu.outputMenu.printFromOpen);
 
-		find_min(output.position_vector_smooth,
+		std::cout << "successfully averaged file" << std::endl;
+
+		find_min(output.time_vector_smooth,
 				 output.pressure_vector_smooth,
 				 output.pressure_min,
 				 output.phase_min);
 
-		find_max(output.position_vector_smooth,
+		find_max(output.time_vector_smooth,
 				 output.pressure_vector_smooth,
 				 output.pressure_max,
 				 output.phase_max);
 
 		if(optionsMenu.mainMenu.ionProbe=="true")
-			find_min(output.position_vector_smooth,
+			find_min(output.time_vector_smooth,
 					 output.ion_vector_smooth,
 					 output.ion_min,
 					 output.ion_phase);
+
+		std::cout << "successfully found min and max" << std::endl;
 
 		if(optionsMenu.dataAnalysisMenu.spectrogram=="true")
 		{
@@ -141,6 +150,105 @@ void process_file(std::string file, output_data &output, options &optionsMenu)
 	}
 	else if(optionsMenu.mainMenu.combustorType=="active")
 	{
+		output.p_rms = compute_prms(cInput,output.p_static);
+
+		compute_frequency_spectrum(cInput,
+								   output.spectrum_magnitude,
+                                   output.spectrum_frequency,
+								   1,
+                                   output.combustor_frequency);
+
+		compute_frequency_spectrum(cInput,
+								   output.ion_spectrum_magnitude,
+                                   output.ion_spectrum_frequency,
+								   2,
+                                   output.ion_frequency);
+		std::vector<double> tmp1 = cInput.table_column(0);
+		std::vector<double> tmp2 = cInput.table_column(1);
+		std::vector<double> tmp3 = cInput.table_column(2);
+
+		average_cycle_active(cInput,
+							  optionsMenu.dataCondMenu.windowSize,
+							  optionsMenu.dataCondMenu.stepSize,
+							  tmp1,
+							  tmp2,
+							  tmp3,
+							  3,
+							  1,
+							  output.encoder_vector_smooth,
+							  output.pressure_vector_smooth,
+							  output.ion_vector_smooth,
+							  output.pressure_scatter,
+							  output.encoder_scatter,
+							  output.ion_scatter,
+							  output.upCrossOver,
+							  output.downCrossOver,
+							  optionsMenu.outputMenu.printFromOpen);
+
+		std::cout << "successfully averaged file" << std::endl;
+		/*
+
+		find_min(output.time_vector_smooth,
+				 output.pressure_vector_smooth,
+				 output.pressure_min,
+				 output.phase_min);
+
+		find_max(output.time_vector_smooth,
+				 output.pressure_vector_smooth,
+				 output.pressure_max,
+				 output.phase_max);
+
+		if(optionsMenu.mainMenu.ionProbe=="true")
+			find_min(output.time_vector_smooth,
+					 output.ion_vector_smooth,
+					 output.ion_min,
+					 output.ion_phase);
+
+		std::cout << "successfully found min and max" << std::endl;
+		*/
+
+		/*
+		if(optionsMenu.dataAnalysisMenu.spectrogram=="true")
+		{
+			build_spectrogram(cInput,
+							  output.combustor_frequency,
+							  output.spectrogram_f,
+						      output.spectrogram_m,
+						      optionsMenu.dataAnalysisMenu.spectNcyclesSpace,
+						      optionsMenu.dataAnalysisMenu.spectNcyclesWindow,
+						      output.spectrogram_n,
+							  1,
+						      output.time);
+
+			build_spectrogram(cInput,
+							  output.combustor_frequency,
+							  output.ion_spectrogram_f,
+						      output.ion_spectrogram_m,
+						      optionsMenu.dataAnalysisMenu.spectNcyclesSpace,
+						      optionsMenu.dataAnalysisMenu.spectNcyclesWindow,
+						      output.spectrogram_n,
+							  2,
+						      output.ion_time);
+		}
+		if(optionsMenu.dataAnalysisMenu.trackPeaks=="true")
+			track_peaks(cInput,
+						output.pressure_vector,
+						output.ion_vector,
+						1,
+						2,
+						0,
+						output.t_max_p,
+						output.t_min_p,
+						output.t_max_i,
+						output.t_min_i,
+						output.p_max,
+					    output.p_min,
+						output.i_max,
+						output.i_min,
+						output.downCrossOver,
+						output.upCrossOver);
+						*/
+
 	}
 	else
 	{

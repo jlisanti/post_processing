@@ -31,7 +31,8 @@ int round_value(int number, int multiple)
 		return lower_value;
 }
 
-void print_output_active (output_data &output)
+
+void print_output_active (output_data &output, options &optionsMenu)
 {
 
 	output.combustor_frequency = round_value(output.combustor_frequency,5);
@@ -167,20 +168,27 @@ void print_output_active (output_data &output)
 				std::vector<double> p_scat;
 				std::vector<double> e_scat;
 				std::vector<double> i_scat;
+		        std::vector<double> tmp1 = cInput.table_column(0);
+                std::vector<double> tmp2 = cInput.table_column(1);
+                std::vector<double> tmp3 = cInput.table_column(2);
 
 				average_cycle_active(cInput_avg,
-						      output.time_ssa,
-							  output.pressure_ssa,
-							  output.ion_ssa,
-						      output.encoder_colmn,
-							  1,
-							  output.window,
-							  p_vec,
-							  e_vec,
-							  i_vec,
-							  p_scat,
-							  e_scat,
-							  i_scat);
+						             optionsMenu.dataCondMenu.windowSize,
+                                     optionsMenu.dataCondMenu.stepSize,
+						             tmp1,
+							         tmp2,
+							         tmp3,
+						             3,
+							         1,
+							         p_vec,
+							         e_vec,
+							         i_vec,
+							         p_scat,
+							         e_scat,
+							         i_scat,
+									 output.upCrossOver,
+									 output.downCrossOver,
+									 optionsMenu.outputMenu.printFromOpen);
 
 				std::ofstream fout_curv(averaged_curve);
 
@@ -353,12 +361,26 @@ void print_output_passive (output_data &output, options &optionsMenu)
 	std::ostringstream convert2;
 	std::ostringstream convert3;
 	std::ostringstream convert4;
+	std::ostringstream convert5;
 
 	convert << int(round_comb_freq);
 	convert1 << int(output.total_temperature);
-	file_name = convert.str() + "Hz_" + convert1.str() + "C.dat";
-    std::string averaged_file = convert.str() + "Hz_" + convert1.str() + "C_scatter.dat";
-    std::string averaged_curve = convert.str() + "Hz_" + convert1.str() + "C_averaged.dat";
+	//file_name = convert.str() + "Hz_" + convert1.str() + "C.dat";
+	convert2 << int(optionsMenu.mainMenu.gasoline);
+	convert3 << int(optionsMenu.mainMenu.heptane);
+	convert4 << int(optionsMenu.mainMenu.ethanol);
+	convert5 << int(optionsMenu.mainMenu.diesel);
+
+	file_name = convert2.str() + "G_" + convert3.str() 
+		         + "H_" + convert4.str() + "E_" + convert5.str() + "D.dat"; 
+    //std::string averaged_file = convert.str() + "Hz_" + convert1.str() + "C_scatter.dat";
+    //std::string averaged_curve = convert.str() + "Hz_" + convert1.str() + "C_averaged.dat";
+
+    std::string averaged_file = convert2.str() + "G_" + convert3.str() 
+		         + "H_" + convert4.str() + "E_" + convert5.str() + "D_scatter.dat"; 
+
+    std::string averaged_curve = convert2.str() + "G_" + convert3.str() 
+		         + "H_" + convert4.str() + "E_" + convert5.str() + "D_average.dat"; 
 
     std::string spectrum_file = convert.str() + "Hz_" + convert1.str() + "C_spectrum.dat";
     std::string spectrogram_file = convert.str() + "Hz_" + convert1.str() + "C_spectrogram.dat";
@@ -371,105 +393,132 @@ void print_output_passive (output_data &output, options &optionsMenu)
 
     std::string peaks_file = convert.str() + "Hz_" + convert1.str() + "C_peaks.dat";
 
+    bool end = false;
+	std::string file_name_next;
 
 
-	for (int i = 0; i < 100; i++)
+	if(file_exists(file_name))
 	{
 
-		std::ostringstream convert2;
-		convert2 << (i+1);
-		if(file_exists(file_name))
+		for (int i = 0; i < 100; i++)
 		{
+		    std::ostringstream convert6;
+		    std::ostringstream convert7;
+		    convert6 << (i+1);
+		    convert7 << (i+2);
 
-			// Add to averaged file
-			// Check if averaged file exist
-			// Combine
-		    if(!file_exists(averaged_file ))
-			{
-				// read existing file
-				int skip_lines = 0;
-				DataFileInput cInput(file_name,skip_lines);
+			if(!(file_exists(file_name_next)))
+		    {
+				end = true;
+			    // Add to averaged file
+			    // Check if averaged file exist
+			    // Combine
+		        if(!file_exists(averaged_file ))
+			    {
+				    // read existing file
+				    int skip_lines = 0;
+				    DataFileInput cInput(file_name,skip_lines);
 
-				//  create file
-				std::ofstream fout_avg(averaged_file);
+				    std::cout << "creating average file" << std::endl;
+
+				    //  create file
+				    std::ofstream fout_avg(averaged_file);
 				
-				int count = 0;
+				    int count = 0;
 
-				for (int j = 0; j < cInput.file_length(); j++)
-				{
-					for (int k = count; k < output.position_vector_smooth.size(); k++)
-					{
-						if (cInput.table_value(j,0) > output.position_vector_smooth[k])
-						{
-							fout_avg << output.position_vector_smooth[k] << '\t'
-								     << output.pressure_vector_smooth[k] << std::endl;
-							count++;
-						}
-						else
-						{
-							fout_avg << cInput.table_value(j,0) << '\t' 
-								     << cInput.table_value(j,1) << std::endl; 
-							break;
-						}
-					}
-				}
-			}
-			else
-			{
+				    for (int j = 0; j < cInput.file_length(); j++)
+			    	{
+					    for (int k = count; k < output.time_vector_smooth.size(); k++)
+				    	{
+						    if (cInput.table_value(j,0) > output.time_vector_smooth[k])
+						    {
+							    fout_avg << output.time_vector_smooth[k] << '\t'
+			                             << output.pressure_vector_smooth[k] << '\t'
+			                             << output.ion_vector_smooth[k] << '\t' 
+			                             << output.phase_vector_smooth[k] << std::endl; 
+							    count++;
+					    	}
+						    else
+						    {
+							    fout_avg << cInput.table_value(j,0) << '\t' 
+								         << cInput.table_value(j,1) << '\t'
+								         << cInput.table_value(j,2) << '\t'
+								         << cInput.table_value(j,3) << std::endl; 
+							   break;
+						    }
+					    }
+			     	}
+			    }
+			    else
+		    	{
+				    // read existing file
+				    int skip_lines = 0;
+				    DataFileInput cInput(averaged_file,skip_lines);
 
-				// read existing file
-				int skip_lines = 0;
-				DataFileInput cInput(averaged_file,skip_lines);
+				    //  create file
+				    std::ofstream fout_avg(averaged_file);
 
-				//  create file
-				std::ofstream fout_avg(averaged_file);
+			    	int count = 0;
 
-				int count = 0;
+			        std::cout << "average file already exits. File length: " << 
+						cInput.file_length() << std::endl;
 
-				for (int j = 0; j < cInput.file_length(); j++)
-				{
-					for (int k = count; k < output.position_vector_smooth.size(); k++)
-					{
-						if (cInput.table_value(j,0) > output.position_vector_smooth[k])
-						{
-							fout_avg << output.position_vector_smooth[k] << '\t'
-								     << output.pressure_vector_smooth[k] << std::endl;
-							count++;
-						}
-						else
-						{
-							fout_avg << cInput.table_value(j,0) << '\t' 
-								     << cInput.table_value(j,1) << std::endl; 
-							break;
-						}
-					}
-				}
-				DataFileInput cInput_avg(averaged_file,skip_lines);
-				std::vector<double> p_vec;
-				std::vector<double> e_vec;
-				std::vector<double> p_scat;
-				std::vector<double> e_scat;
+				    for (int j = 0; j < cInput.file_length(); j++)
+				    {
+					    for (int k = count; k < output.time_vector_smooth.size(); k++)
+					    {
+						    if (cInput.table_value(j,0) > output.time_vector_smooth[k])
+						    {
+							    fout_avg << output.time_vector_smooth[k] << '\t'
+			                             << output.pressure_vector_smooth[k] << '\t'
+			                             << output.ion_vector_smooth[k] << '\t' 
+			                             << output.phase_vector_smooth[k] << std::endl; 
+							     count++;
+						    }
+						    else
+						    {
+							    fout_avg << cInput.table_value(j,0) << '\t' 
+								         << cInput.table_value(j,1) << '\t'
+								         << cInput.table_value(j,2) << '\t'
+								         << cInput.table_value(j,3) << std::endl; 
+							     break;
+						    }
+					    }
+			    	}
+				    DataFileInput cInput_avg(averaged_file,skip_lines);
+			    	std::vector<double> timeVec;
+			    	std::vector<double> pressureVec;
+			    	std::vector<double> ionProbeVec;
+			    	std::vector<double> phaseVec;
 
-				std::ofstream fout_curv(averaged_curve);
+			    	average_files(cInput_avg.table_column(0),
+				    		      cInput_avg.table_column(1),
+				    			  cInput_avg.table_column(2),
+				    			  timeVec,
+				    			  pressureVec,
+				    			  ionProbeVec,
+				    			  phaseVec);
 
-				for (int i = 0; i < output.position_vector_smooth.size(); i++)
-				{
-					fout_curv << output.position_vector_smooth[i] << '\t'
-						      << output.pressure_vector_smooth[i] << std::endl;
-				}
-			}
+				    std::ofstream fout_curv(averaged_curve);
 
-			file_name = convert.str() + "Hz_" + convert1.str() + "C_" + convert2.str() + ".dat";
-			/*
-			file_name = convert.str() + "Hz_" + convert3.str() + "mgpsCH4_" + 
-						convert4.str() + "mgpsH2_p" +  
-						convert1.str() + "_pw" + convert2.str() + "_out_"
-						+ convert2.str() + ".dat";
-						*/
-		}
-		else
-			break;
+				    for (int i = 0; i < timeVec.size(); i++)
+			    	{
+					    fout_curv << timeVec[i]      << '\t'
+						          << pressureVec[i]  << '\t'
+						    	  << ionProbeVec[i]  << '\t'
+						    	  << phaseVec[i]     << std::endl;
+				    }
+			    }
 
+			    file_name = convert2.str() + "G_" + convert3.str() 
+		             + "H_" + convert4.str() + "E_" + convert5.str() + "D_" + convert7.str() + ".dat"; 
+
+				file_name_next = convert2.str() + "G_" + convert3.str() 
+		             + "H_" + convert4.str() + "E_" + convert5.str() + "D_" + convert7.str() + ".dat"; 
+		    }
+			if(end)
+				break;
+	    }
 	}
 
 
@@ -505,13 +554,17 @@ void print_output_passive (output_data &output, options &optionsMenu)
 	}
 	
 
+//	if(!file_exists(file_name))
+//	{
 	std::ofstream fout1(file_name);
-	for (int i = 0; i < output.position_vector_smooth.size(); i++)
+	for (int i = 0; i < output.time_vector_smooth.size(); i++)
 	{
-		fout1 << output.position_vector_smooth[i] << '\t'
+		fout1 << output.time_vector_smooth[i] << '\t'
 			  << output.pressure_vector_smooth[i] << '\t'
-			  << output.ion_vector_smooth[i] << std::endl; 
+			  << output.ion_vector_smooth[i] << '\t' 
+			  << output.phase_vector_smooth[i] << std::endl; 
 	}
+//	}
 
 	std::ofstream fout2("combustor_data.dat", std::ios_base::app);
 	fout2 //<< std::setw(12) << output.mass_flow_rate_air << '\t'
@@ -538,7 +591,7 @@ void print_output_passive (output_data &output, options &optionsMenu)
 		  << std::setw(12) << optionsMenu.mainMenu.gasoline << '\t'
 		  << std::setw(12) << optionsMenu.mainMenu.heptane << '\t'
 		  << std::setw(12) << optionsMenu.mainMenu.ethanol << '\t'
-		  << std::setw(12) << optionsMenu.mainMenu.diseal << std::endl; 
+		  << std::setw(12) << optionsMenu.mainMenu.diesel << std::endl; 
 
 	std::ofstream fout4(spectrum_file);
     for (int i = 0; i < output.spectrum_magnitude.size(); i++)
@@ -569,6 +622,12 @@ void print_output_passive (output_data &output, options &optionsMenu)
 	if (!file_exists(peaks_file))
 	{
 	    std::ofstream fout10(peaks_file);
+		fout10 << "tMaxP" << '\t'
+			   << "pMax" << '\t'
+			   << "tMinP" << '\t'
+			   << "pMin" << '\t'
+			   << "tMinIP" << '\t'
+			   << "IPmin" << std::endl;
 	    for (int i = 0; i < output.p_max.size(); i++)
 		    fout10 << output.t_max_p[i] << '\t'
 			       << output.p_max[i]   << '\t'

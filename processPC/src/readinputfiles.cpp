@@ -76,8 +76,8 @@ void read_settings_file(std::string file,
 					optionsMenu.mainMenu.heptane=atof(value.c_str());
 				if(setting=="ethanol")
 					optionsMenu.mainMenu.ethanol=atof(value.c_str());
-				if(setting=="diseal")
-					optionsMenu.mainMenu.diseal=atof(value.c_str());
+				if(setting=="diesel")
+					optionsMenu.mainMenu.diesel=atof(value.c_str());
 			}
 		}
 
@@ -102,8 +102,10 @@ void read_settings_file(std::string file,
 					optionsMenu.dataCondMenu.vectorDimensionM=atof(value.c_str());
 				if(setting=="kmax")
 					optionsMenu.dataCondMenu.kMax=atof(value.c_str());
-				if(setting=="windowsize")
+				if(setting=="windowSize")
 					optionsMenu.dataCondMenu.windowSize=atof(value.c_str());
+				if(setting=="stepSize")
+					optionsMenu.dataCondMenu.stepSize=atof(value.c_str());
 			}
 		}
 

@@ -9,18 +9,22 @@
 #include "averagecycle.h"
 
 void average_cycle_active(DataFileInput &cInput, 
+		                  double window,
+						  double step,
 						  std::vector<double> &time_ssa,
 						  std::vector<double> &pressure_ssa,
 						  std::vector<double> &ion_ssa,
 						  int encoder_colmn,
 				          int pressur_colmn,
-				          double window,
 				          std::vector<double> &e_vector,
 				          std::vector<double> &p_vector,
 						  std::vector<double> &i_vector,
 						  std::vector<double> &pressure_scatter,
 						  std::vector<double> &encoder_scatter,
-						  std::vector<double> &ion_scatter)
+						  std::vector<double> &ion_scatter,
+						  std::vector<double> &up_cross_over,
+						  std::vector<double> &down_cross_over,
+						  std::string printFromStart)
 {
 	std::vector<double> encoder_vec = smooth_encoder(cInput,
 			                                         encoder_colmn);
@@ -32,27 +36,11 @@ void average_cycle_active(DataFileInput &cInput,
 	double step_min = 0.0;
 	double step_max = window;
 
-	//std::vector<double> p_vector;
-	//std::vector<double> e_vector;
-
-	std::string prompt;
-	std::cout << " Print from valve openning? (Y/n)" << std::endl;
-	std::cin >> prompt;
-	if((prompt=="Y") ||
-	   (prompt=="y") ||
-	   (prompt=="yes") ||
-	   (prompt=="Yes") ||
-	   (prompt=="YES"))
+	if(printFromStart=="true")
 	{
-		double r_valve = 0.0;
-		double h_valve = 0.0;
-		double r_inlet  = 0.0;
-		std::cout << " Enter valve radius" << std::endl;
-		std::cin >> r_valve;
-		std::cout << " Enter valve length" << std::endl;
-		std::cin >> h_valve;
-		std::cout << " Enter inlet radius" << std::endl;
-		std::cin >> r_inlet;
+		double r_valve = 8.65/1000.0;
+		double h_valve = 40.0/1000.0;
+		double r_inlet = 8.65/1000.0;
 
 		double h = sqrt(pow(h_valve/2.0,2) + pow(r_inlet,2));
 		double alpha = 2.0*asin(r_inlet/h);
@@ -63,26 +51,48 @@ void average_cycle_active(DataFileInput &cInput,
 		std::vector<double> index;
 		std::cout << encoder_close << '\t' << encoder_open << std::endl;
 
+		for (int i = 0; i < encoder_vec.size(); i++)
+			if(encoder_vec[i] > 2.5)
+				encoder_vec[i] = encoder_vec[i] - 2.5;
+
+		/* loop through encoder file */
+		for (int i = 0; i < encoder_vec.size(); i++)
+		{
+			/* check for cross opening value */
+			if((encoder_vec[i]   <= encoder_open) &&
+			   (encoder_vec[i-1] < encoder_open)  &&
+			   (encoder_vec[i-2] < encoder_open)  &&
+			   (encoder_vec[i-3] < encoder_open)  && 
+			   (encoder_vec[i-4] < encoder_open)  &&
+			   (encoder_vec[i+1] > encoder_open)  &&
+			   (encoder_vec[i+2] > encoder_open)  &&
+			   (encoder_vec[i+3] > encoder_open)  &&
+			   (encoder_vec[i+4] > encoder_open))
+				up_cross_over.push_back(i);
+			if((encoder_vec[i]   <= encoder_close) &&
+			   (encoder_vec[i-1] < encoder_close)  &&
+			   (encoder_vec[i-2] < encoder_close)  &&
+			   (encoder_vec[i-3] < encoder_close)  &&
+			   (encoder_vec[i-4] < encoder_close)  &&
+			   (encoder_vec[i+1] > encoder_close)  &&
+			   (encoder_vec[i+2] > encoder_close)  &&
+			   (encoder_vec[i+3] > encoder_close)  &&
+			   (encoder_vec[i+4] > encoder_close))
+				down_cross_over.push_back(i);
+			
+		}
+
+    std::ofstream fout_cross("crossover.dat");
+	for (int i = 0; i < up_cross_over.size(); i++)
+	{
+		fout_cross << cInput.table_value(down_cross_over[i],0) << '\t'
+			       << cInput.table_value(down_cross_over[i],3) << std::endl;
+	}
+	exit(1);
+	}
+
+
 		/*
-		for (int i = 0; i < e_vector.size(); i++)
-			if(e_vector[i] >= encoder_open)
-			{
-				open_index = i;
-				break;
-			}
-		for (int i = 0; i < e_vector.size(); i++)
-		{
-			if(e_vector[i] <= encoder_open)
-			{
-				e_vector[i] = e_vector[i] + e_vector[e_vector.size()-1];
-			}
-		}
-		double offset = e_vector[open_index];
-		for (int i = 0; i < e_vector.size(); i++)
-		{
-			e_vector[i] = e_vector[i] - offset;
-		}
-		*/
 
 	for (int i = 0; i < steps; i++)
 	{
@@ -133,92 +143,149 @@ void average_cycle_active(DataFileInput &cInput,
 				}
 			}
 
-			if((encoder > step_min) && (encoder < step_max))
-			{
+		//	if((encoder > step_min) && (encoder < step_max))
+		//	{
 				//pressure_scatter.
 			    //		push_back(cInput.table_value(j,pressur_colmn));
 				pressure_scatter.push_back(pressure_ssa[j]);
 				ion_scatter.push_back(ion_ssa[j]);
 				encoder_scatter.push_back(encoder);
 				//p_sum = p_sum + cInput.table_value(j,pressur_colmn);
-				p_sum = p_sum + pressure_ssa[j];
-				i_sum = i_sum + ion_ssa[j];
-				e_sum = e_sum + encoder;
-				count++;
-			}
+				//p_sum = p_sum + pressure_ssa[j];
+				//i_sum = i_sum + ion_ssa[j];
+				//e_sum = e_sum + encoder;
+		//		count++;
+		//	}
 
 		}
-		p_vector.push_back(p_sum/double(count));
-		i_vector.push_back(i_sum/double(count));
-		e_vector.push_back(e_sum/double(count));
-		step_min = step_min + window; 
-		step_max = step_max + window;
+		//p_vector.push_back(p_sum/double(count));
+		//i_vector.push_back(i_sum/double(count));
+		//e_vector.push_back(e_sum/double(count));
+		//step_min = step_min + window; 
+		//step_max = step_max + window;
 	}
-	}
-	/*
-	bool check = false;
-	while (check==false)
-	{
-		check = true;
-		for (int i = 0; i < e_vector.size()-1; i++)
-		{
-			if(e_vector[i] > e_vector[i+1])
-			{
-				double tmp_a = e_vector[i];
-				double tmp_b = e_vector[i+1];
-				e_vector[i] = tmp_b;
-				e_vector[i+1] = tmp_a;
 
-				tmp_a = p_vector[i];
-				tmp_b = p_vector[i+1];
-				p_vector[i] = tmp_b;
-				p_vector[i+1] = tmp_a;
-
-				tmp_a = i_vector[i];
-				tmp_b = i_vector[i+1];
-				i_vector[i] = tmp_b;
-				i_vector[i+1] = tmp_a;
-
-				check = false;
-			}
-		}
+	    std::ofstream fout1("scatter.dat",std::ios_base::app);
+        for (int i = 0; i < encoder_scatter.size(); i++)
+        {
+            fout1 << encoder_scatter[i]    << '\t'
+                  << pressure_scatter[i] << '\t'
+                  << ion_scatter[i]      << std::endl;
+        }
+		exit(1);
 	}
 	*/
 
-	
-	//std::ofstream fout("test_out.dat");
-	//for (int i = 0; i < p_vector.size(); i++)
-	//{
-    //	fout << e_vector[i] << '\t' << p_vector[i] << std::endl;
-	//}
-
 	/*
-	std::string prompt;
-	std::cout << " Print from valve openning? (Y/n)" << std::endl;
-	std::cin >> prompt;
-	if((prompt=="Y") ||
-	   (prompt=="y") ||
-	   (prompt=="yes") ||
-	   (prompt=="Yes") ||
-	   (prompt=="YES"))
+        int buffer = 4;
+
+	    for (int i = buffer; i < cInput.file_length()-buffer; i ++)
+        {
+            if(((encoder_vec[i+2] > encoder_open) && (encoder_vec[i-1] > encoder_open))
+					|| ((encoder_vec[i+2] > (encoder_open+2.5)) 
+						&& (encoder_vec[i-1] > (encoder_open+2.5))))
+                up_cross_over.push_back(i);
+            if(((encoder_vec[i+2] > encoder_close) && (encoder_vec[i-1] > encoder_close))
+					|| ((encoder_vec[i+2] > (encoder_close+2.5)) 
+						&& (encoder_vec[i-1] > (encoder_close+2.5))))
+                down_cross_over.push_back(i);
+        }
+
+        // Map pressure signal from each cycle into single space 
+
+	    std::vector<double> cycle_time;
+	    int size = up_cross_over.size()-1;
+
+	    if(printFromStart=="true")
+	    	size = down_cross_over.size()-1;
+   
+        // start from first up crossing 
+        for (int i = 0; i < size; i++)
+        {
+
+	        int strtIndx = up_cross_over[i];
+	        int endIndx  = up_cross_over[i+1];
+
+		    if(printFromStart=="true")
+		    {
+			    strtIndx = down_cross_over[i];
+			    endIndx   = down_cross_over[i+1];
+			    size = down_cross_over.size()-1;
+		    }
+
+            for (int j = strtIndx; j < endIndx; j++)
+            {
+			    encoder_scatter.push_back(encoder_vec[j]);
+                pressure_scatter.push_back(cInput.table_value(j,pressur_colmn));
+                ion_scatter.push_back(cInput.table_value(j,2));
+            }
+        }
+	    std::ofstream fout1("scatter.dat",std::ios_base::app);
+        for (int i = 0; i < encoder_scatter.size(); i++)
+        {
+            fout1 << encoder_scatter[i]    << '\t'
+                  << pressure_scatter[i] << '\t'
+                  << ion_scatter[i]      << std::endl;
+        }
+		exit(1);
+	}
+
+    // Average cycles into single curve
+	*/
+
+		/*
+	int steps = ceil((1.0/frequency)/step);
+
+    double time_step_min = 0.0;
+    double time_step_max = step + window;
+	double time_step = 0.0;
+
+    for (int i = 0; i < steps; i++)
+    {
+        double countTime = 0;
+        double press_time_sum = 0;
+        double time_sum = 0;
+        double ion_time_sum = 0;
+
+        for (int j = 0; j < time_scatter.size(); j++)
+        {
+            if((time_scatter[j] > time_step_min) && (time_scatter[j] < time_step_max))
+            {
+                press_time_sum = press_time_sum + pressure_scatter[j];
+                time_sum = time_sum + time_scatter[j];
+                ion_time_sum   = ion_time_sum   + ion_scatter[j];
+                countTime++;
+            }
+        }
+
+		if(countTime != 0)
+		{
+			time_average.push_back(time_sum/double(countTime));
+			pressure_average.push_back(press_time_sum/double(countTime));
+			ion_average.push_back(ion_time_sum/double(countTime));
+		}
+
+		time_step = time_step + step;
+        time_step_min = time_step - window;
+        time_step_max = time_step + window;
+    }
+
+	for (int i = 0; i < time_average.size(); i++)
 	{
-		double r_valve = 0.0;
-		double h_valve = 0.0;
-		double r_inlet  = 0.0;
-		std::cout << " Enter valve radius" << std::endl;
-		std::cin >> r_valve;
-		std::cout << " Enter valve length" << std::endl;
-		std::cin >> h_valve;
-		std::cout << " Enter inlet radius" << std::endl;
-		std::cin >> r_inlet;
+		phase_average.push_back(time_average[i]/time_average[time_average.size()-1]);
+	}
 
-		double h = sqrt(pow(h_valve/2.0,2) + pow(r_inlet,2));
-		double alpha = 2.0*asin(r_inlet/h);
-		double encoder_open = alpha*(2.5/(2.0*M_PI));
-		int open_index = 0;
-		std::vector<double> e_tmp;
-		std::vector<double> index;
+    std::ofstream fout2("average.dat");
+    for (int i = 0; i < time_average.size(); i++)
+    {
+        fout2 << time_average[i]     << '\t'
+              << pressure_average[i] << '\t'
+              << ion_average[i]      << std::endl;
+    }
 
+
+	*/
+		/*
 		for (int i = 0; i < e_vector.size(); i++)
 			if(e_vector[i] >= encoder_open)
 			{
@@ -237,35 +304,8 @@ void average_cycle_active(DataFileInput &cInput,
 		{
 			e_vector[i] = e_vector[i] - offset;
 		}
-	}
-	bool check = false;
-	while (check==false)
-	{
-		check = true;
-		for (int i = 0; i < e_vector.size()-1; i++)
-		{
-			if(e_vector[i] > e_vector[i+1])
-			{
-				double tmp_a = e_vector[i];
-				double tmp_b = e_vector[i+1];
-				e_vector[i] = tmp_b;
-				e_vector[i+1] = tmp_a;
+		*/
 
-				tmp_a = p_vector[i];
-				tmp_b = p_vector[i+1];
-				p_vector[i] = tmp_b;
-				p_vector[i+1] = tmp_a;
-
-				tmp_a = i_vector[i];
-				tmp_b = i_vector[i+1];
-				i_vector[i] = tmp_b;
-				i_vector[i+1] = tmp_a;
-
-				check = false;
-			}
-		}
-	}
-*/
 }
 
 
@@ -273,46 +313,30 @@ void average_cycle_passive(DataFileInput &cInput,
                    int pressur_colmn,
                    int ion_colmn,
                    double window,
-                   std::vector<double> &position_average,
+				   double step,
+                   std::vector<double> &phase_average,
+				   std::vector<double> &time_average,
                    std::vector<double> &pressure_average,
                    std::vector<double> &ion_average,
-                   std::vector<double> &position_scatter,
+                   std::vector<double> &phase_scatter,
+				   std::vector<double> &time_scatter,
                    std::vector<double> &pressure_scatter,
                    std::vector<double> &ion_scatter,
 				   std::vector<double> &down_cross_over,
 				   std::vector<double> &up_cross_over,
-                   double static_pressure)
+				   double frequency,
+                   double static_pressure,
+				   std::string printFromStart)
 {
 
-    // Compute mean of pressure signal
-    // Perhaps better to record static pressure - 
-    //    then the crossover value can be this. 
-
-    // Proxy
-    //double static_pressure = 1.01325;
-    /*
-    int n = cInput.file_length();
-    double * data = new double[n];
-
-    for (int i = 0; i < n; i++)
-        data[i] = cInput.table_value(i,pressur_colmn);
-
-    double mean = gsl_stats_mean(data, 1, n);
-
-    std::cout << "mean: " <<  mean << std::endl;
-
-    exit(1);
-    */
 
     // Isolate cycle stop and start positions from noise
 
     if ((static_pressure < 0.9) || (static_pressure > 1.1))
         static_pressure = 1.01325;
+	int time_colmn = 0;
 
     int buffer = 4;
-
-    //std::vector<int> down_cross_over;
-    //std::vector<int> up_cross_over;
 
 	for (int i = buffer; i < cInput.file_length()-buffer; i ++)
     {
@@ -334,86 +358,191 @@ void average_cycle_passive(DataFileInput &cInput,
         }
     }
 
-    /*
-    std::ofstream fout1("down_cross_over.dat");
-    for (int i = 0; i < down_cross_over.size(); i++)
-    {
-        fout1 << cInput.table_value(down_cross_over[i],0) << '\t' 
-              << cInput.table_value(down_cross_over[i],pressur_colmn) << std::endl; 
-    }
-
-    std::ofstream fout2("up_cross_over.dat");
-    for (int i = 0; i < up_cross_over.size(); i++)
-    {
-        fout2 << cInput.table_value(up_cross_over[i],0) << '\t' 
-              << cInput.table_value(up_cross_over[i],pressur_colmn) << std::endl; 
-    }
-    */
+    std::ofstream fout_cross("crossover.dat");
+	for (int i = 0; i < up_cross_over.size(); i++)
+	{
+		fout_cross << cInput.table_value(down_cross_over[i],time_colmn) << '\t'
+			       << cInput.table_value(down_cross_over[i],pressur_colmn) << std::endl;
+	}
 
     // Map pressure signal from each cycle into single space 
+
+	std::vector<double> cycle_time;
+
+
+	int size = up_cross_over.size()-1;
+
+	if(printFromStart=="true")
+		size = down_cross_over.size()-1;
    
     // start from first up crossing 
-    for (int i = 0; i < up_cross_over.size()-1; i++)
+    for (int i = 0; i < size; i++)
     {
-        for (int j = up_cross_over[i]; j < up_cross_over[i+1]; j++)
+
+	    int strtIndx = up_cross_over[i];
+	    int endIndx   = up_cross_over[i+1];
+
+		if(printFromStart=="true")
+		{
+			strtIndx = down_cross_over[i];
+			endIndx   = down_cross_over[i+1];
+			size = down_cross_over.size()-1;
+		}
+
+        for (int j = strtIndx; j < endIndx; j++)
         {
             // time mapping
-            double dt = cInput.table_value(up_cross_over[i+1],0)
-                       -cInput.table_value(up_cross_over[i],0);
-            double t_initial = cInput.table_value(up_cross_over[i],0);
-            double pos = (cInput.table_value(j,0)
-                * (1.0/dt)) - (t_initial/dt);
-            position_scatter.push_back(pos);
+            double dt = cInput.table_value(endIndx,0)
+                       -cInput.table_value(strtIndx,0);
+            double t_initial = cInput.table_value(strtIndx,0);
+            double posPhase = (cInput.table_value(j,0)
+                               * (1.0/dt)) - (t_initial/dt);
+			double posTime = cInput.table_value(j,0)
+				             - cInput.table_value(strtIndx,0);
+            phase_scatter.push_back(posPhase);
+			time_scatter.push_back(posTime);
             pressure_scatter.push_back(cInput.table_value(j,pressur_colmn));
             ion_scatter.push_back(cInput.table_value(j,ion_colmn));
         }
     }
- std::ofstream fout1("scatter.dat");
-    for (int i = 0; i < position_scatter.size(); i++)
+	std::ofstream fout1("scatter.dat",std::ios_base::app);
+    for (int i = 0; i < phase_scatter.size(); i++)
     {
-        fout1 << position_scatter[i] << '\t'
+        fout1 << phase_scatter[i]    << '\t'
+			  << time_scatter[i]     << '\t'
               << pressure_scatter[i] << '\t'
               << ion_scatter[i]      << std::endl;
     }
 
     // Average cycles into single curve
 
-    int steps = ceil(1.0/window);
+    //int steps = ceil(1.0/window);
+//	std::cout << "step " << step << " window " << window <<  std::endl;
+//	exit(1);
+	int steps = ceil((1.0/frequency)/step);
 
-    double step_min = 0.0;
-    double step_max = window;
+    //double phase_step_min = 0.0;
+    //double phase_step_max = window;
+    double time_step_min = 0.0;
+    double time_step_max = step + window;
+	double time_step = 0.0;
 
     for (int i = 0; i < steps; i++)
     {
-        double count = 0;
-        double press_sum = 0;
-        double posit_sum = 0;
-        double ion_sum = 0;
+        //double countPhase = 0;
+        double countTime = 0;
+        //double press_phase_sum = 0;
+        double press_time_sum = 0;
+        //double phase_sum = 0;
+        double time_sum = 0;
+        //double ion_phase_sum = 0;
+        double ion_time_sum = 0;
+		/*
 
-        for (int j = 0; j < position_scatter.size(); j++)
+        for (int j = 0; j < phase_scatter.size(); j++)
         {
-            if((position_scatter[j] > step_min) && (position_scatter[j] < step_max))
+            if((phase_scatter[j] > phase_step_min) && (phase_scatter[j] < phase_step_max))
             {
-                press_sum = press_sum + pressure_scatter[j];
-                posit_sum = posit_sum + position_scatter[j];
-                ion_sum   = ion_sum   + ion_scatter[j];
-                count++;
+                press_phase_sum = press_phase_sum + pressure_scatter[j];
+                phase_sum = phase_sum + phase_scatter[j];
+                ion_phase_sum   = ion_phase_sum   + ion_scatter[j];
+                countPhase++;
             }
         }
-        position_average.push_back(posit_sum/double(count));
-        pressure_average.push_back(press_sum/double(count));
-        ion_average.push_back(ion_sum/double(count));
-        step_min = step_min + window;
-        step_max = step_max + window;
+		*/
+        for (int j = 0; j < time_scatter.size(); j++)
+        {
+			/*
+			std::cout << time_step_min << '\t'
+				      << time_scatter[j] << '\t'
+				      << time_step_max << std::endl; 
+					  */
+            if((time_scatter[j] > time_step_min) && (time_scatter[j] < time_step_max))
+            {
+                press_time_sum = press_time_sum + pressure_scatter[j];
+                time_sum = time_sum + time_scatter[j];
+                ion_time_sum   = ion_time_sum   + ion_scatter[j];
+                countTime++;
+            }
+        }
+        //phase_average.push_back(phase_sum/double(countPhase));
+		if(countTime != 0)
+		{
+			time_average.push_back(time_sum/double(countTime));
+			pressure_average.push_back(press_time_sum/double(countTime));
+			ion_average.push_back(ion_time_sum/double(countTime));
+		}
+        //phase_step_min = phase_step_min + window;
+        //phase_step_max = phase_step_max + window;
+		time_step = time_step + step;
+        time_step_min = time_step - window;
+        time_step_max = time_step + window;
     }
 
+	for (int i = 0; i < time_average.size(); i++)
+	{
+		phase_average.push_back(time_average[i]/time_average[time_average.size()-1]);
+	}
+
     std::ofstream fout2("average.dat");
-    for (int i = 0; i < position_average.size(); i++)
+    for (int i = 0; i < time_average.size(); i++)
     {
-        fout2 << position_average[i] << '\t'
+        fout2 << time_average[i]     << '\t'
               << pressure_average[i] << '\t'
               << ion_average[i]      << std::endl;
     }
 }
 
+void average_files(std::vector<double> time_scatter,
+		           std::vector<double> pressure_scatter,
+				   std::vector<double> ion_scatter,
+				   std::vector<double> &time_average,
+				   std::vector<double> &pressure_average,
+				   std::vector<double> &ion_average,
+				   std::vector<double> &phase_average)
+{
+	double max_time = *max_element(std::begin(time_scatter), std::end(time_scatter));
+	int steps = 100;
 
+	double step = max_time/double(steps);
+	double window = 1.5*step;
+    //int steps = window/step;//ceil((1.0/frequency)/step);
+
+    double time_step_min = 0.0;
+    double time_step_max = step + window;
+	double time_step = 0.0;
+
+    for (int i = 0; i < steps; i++)
+    {
+        double countTime = 0;
+        double press_time_sum = 0;
+        double time_sum = 0;
+        double ion_time_sum = 0;
+
+        for (int j = 0; j < time_scatter.size(); j++)
+        {
+            if((time_scatter[j] > time_step_min) && (time_scatter[j] < time_step_max))
+            {
+                press_time_sum = press_time_sum + pressure_scatter[j];
+                time_sum = time_sum + time_scatter[j];
+                ion_time_sum   = ion_time_sum   + ion_scatter[j];
+                countTime++;
+            }
+        }
+		if(countTime != 0)
+		{
+			time_average.push_back(time_sum/double(countTime));
+			pressure_average.push_back(press_time_sum/double(countTime));
+			ion_average.push_back(ion_time_sum/double(countTime));
+		}
+
+		time_step = time_step + step;
+        time_step_min = time_step - window;
+        time_step_max = time_step + window;
+    }
+
+	for (int i = 0; i < time_average.size(); i++)
+	{
+		phase_average.push_back(time_average[i]/time_average[time_average.size()-1]);
+	}
+}

@@ -61,7 +61,7 @@ int main(int argc, char*argv[])
 			std::cout << "Processing: " << file_names[i] << std::endl;
 			output_data output;
 			process_file(file_names[i],output,optionsMenu);
-			print_output_passive(output,optionsMenu);
+			print_output_active(output,optionsMenu);
 		}
 	}
 	else

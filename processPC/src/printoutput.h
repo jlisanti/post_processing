@@ -4,7 +4,7 @@
 #include "processfile.h"
 #include "readinputfiles.h"
 
-void print_output_active (output_data &output);
+void print_output_active (output_data &output, options &optionsMenu);
 
 void print_output_passive (output_data &output, options &optionsMenu);
 

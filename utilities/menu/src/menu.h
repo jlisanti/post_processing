@@ -28,6 +28,8 @@ public:
 			      std::vector<std::string>);
 	void delete_menu(std::string menu_name);
 	void display_menu(std::string menu);
+
+	std::string get_response();
 };
 
 
