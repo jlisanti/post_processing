@@ -1,0 +1,3 @@
+#!/bin/bash
+
+sudo cp valveFunction /usr/local/bin/

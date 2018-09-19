@@ -26,6 +26,8 @@ typedef struct {
 	double p_rms;
 	double p_static;
 	double static_pressure;
+	double equivalenceRatio;
+	double massFlowRateAir;
 	std::vector<double> spectrum_magnitude;
 	std::vector<double> spectrum_frequency;
 	std::vector<double> ion_spectrum_magnitude;
@@ -48,6 +50,7 @@ typedef struct {
 	std::vector<double> pressure_vector;
 	std::vector<double> upCrossOver;
 	std::vector<double> downCrossOver;
+	std::vector<double> areaFunction;
 	bool fuel_injection;
 	double mdot_air;
 	double phi;
@@ -74,6 +77,8 @@ typedef struct {
 	double window;
 	double acquisition_time;
 	int encoder_colmn;
+	int pressure_colmn;
+	int ion_probe_colmn;
 	std::vector<double> e_max_p;
 	std::vector<double> e_min_p;
 	std::vector<double> e_max_i;

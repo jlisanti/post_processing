@@ -1,0 +1,62 @@
+dataType {
+	experiment			pulseCombustor;
+	combustorType		active;
+	fuelType			liquid;
+	ionProbe			false;
+	numberFuels         1;
+	fuelA               ethylene;
+
+	gasoline			0;
+	heptane				0;
+	ethanol				0;
+	diseal				0;
+	ethylene            100;
+};
+
+dataConditioning {
+	SSA					false;
+	vectorDimensionM	10;
+	kMax				3;             
+	
+	windowSize			0.05;
+	stepSize            0.01;
+};
+
+dataAnalysis {
+
+	findPeaks           true;
+	averageCycle		true;
+	freqSpectrum		true;
+	spectrogram			true;
+	spectNcyclesWindow  15.0;
+	spectNcyclesSpace	0.5;
+
+	trackPeaks			true;
+
+	bodePlot			false;
+
+	computeRMS			true;
+
+	computeMassFlowRate true;
+
+	inletTemperature    350.0;
+	gasConstant         287.15;
+
+	inletArea           0.000452389342117;
+	inletLength         0.046;
+	C                   0.9;
+	eta                 0.079;
+
+	spanCount           1000;
+	inletRadius         0.0115;
+	ballInternalRadius  0.0115;
+	lengthBall          0.04;
+
+	staticPressure      101325.0;
+	inletLength         0.0666;
+};
+
+output {
+	printFromOpen     true;
+};
+

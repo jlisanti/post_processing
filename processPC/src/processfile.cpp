@@ -2,8 +2,11 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include  <cmath>
+#include <cmath>
 #include <cstring>
+#include <algorithm>
+#include <cctype>
+#include <locale>
 
 #include <gsl/gsl_statistics.h>
 
@@ -21,18 +24,18 @@
 #include "findroots.h"
 #include "spectrogram.h"
 #include "trackpeaks.h"
+#include "computemassflowrate.h"
+#include "computeballvalvearea.h"
 
-/*
-#include "computemass.h"
-*/
 
 void process_file(std::string file, output_data &output, options &optionsMenu)
 {
 
-	
 	output.file_name = file;
 	int skipLines = 0;
+	std::cout << "reading header file" << std::endl;
 	read_header_file_data(file,output,skipLines);
+	std::cout << "Read data for processing" << std::endl;
 	DataFileInput cInput(file,skipLines);
 
 	if(optionsMenu.dataCondMenu.SSA=="true")
@@ -52,6 +55,7 @@ void process_file(std::string file, output_data &output, options &optionsMenu)
 			output.kmax,
 			3);
 
+	/* process passive valve data */
 	if(optionsMenu.mainMenu.combustorType=="passive")
 	{
 		output.p_rms = compute_prms(cInput,output.p_static);
@@ -148,24 +152,47 @@ void process_file(std::string file, output_data &output, options &optionsMenu)
 						output.upCrossOver);
 
 	}
+	/* process active valve data */
 	else if(optionsMenu.mainMenu.combustorType=="active")
 	{
+		std::cout << " Processing active valve data"  << std::endl;
+
+		valveProperties valveGeom; 
+		valveGeom.spanCount = optionsMenu.dataAnalysisMenu.spanCount;
+		valveGeom.inletRadius = optionsMenu.dataAnalysisMenu.inletRadius;
+		valveGeom.ballInternalRadius = optionsMenu.dataAnalysisMenu.ballInternalRadius;
+		valveGeom.h = optionsMenu.dataAnalysisMenu.lengthBall;
+
+		//std::vector<double> areaFunction;
+		std::cout << "computing valve area" << std::endl;
+		computeBallValveAreaFunction(valveGeom,
+				                     1000,
+									 output.areaFunction);
+		std::cout << "computed valve area" << std::endl;
+
 		output.p_rms = compute_prms(cInput,output.p_static);
 
 		compute_frequency_spectrum(cInput,
 								   output.spectrum_magnitude,
                                    output.spectrum_frequency,
-								   1,
+								   output.pressure_colmn,
                                    output.combustor_frequency);
 
+		/*
 		compute_frequency_spectrum(cInput,
 								   output.ion_spectrum_magnitude,
                                    output.ion_spectrum_frequency,
 								   2,
                                    output.ion_frequency);
+								   */
+		/* need to determine pressure and econder coloumns dynamically */
+
 		std::vector<double> tmp1 = cInput.table_column(0);
-		std::vector<double> tmp2 = cInput.table_column(1);
-		std::vector<double> tmp3 = cInput.table_column(2);
+		std::vector<double> tmp2 = cInput.table_column(output.pressure_colmn);
+		std::vector<double> tmp3 = cInput.table_column(output.encoder_colmn);
+
+		std::cout << "Encoder colmn: " << output.encoder_colmn << '\t'
+			      << "Pressur colmn: " << output.pressure_colmn << std::endl;
 
 		average_cycle_active(cInput,
 							  optionsMenu.dataCondMenu.windowSize,
@@ -173,8 +200,8 @@ void process_file(std::string file, output_data &output, options &optionsMenu)
 							  tmp1,
 							  tmp2,
 							  tmp3,
-							  3,
-							  1,
+							  output.encoder_colmn,
+							  output.pressure_colmn,
 							  output.encoder_vector_smooth,
 							  output.pressure_vector_smooth,
 							  output.ion_vector_smooth,
@@ -183,17 +210,20 @@ void process_file(std::string file, output_data &output, options &optionsMenu)
 							  output.ion_scatter,
 							  output.upCrossOver,
 							  output.downCrossOver,
+							  output.areaFunction,
 							  optionsMenu.outputMenu.printFromOpen);
 
-		std::cout << "successfully averaged file" << std::endl;
-		/*
+		std::cout << std::endl;
+		std::cout << "finished averaging cycle" << std::endl;
+		std::cout << std::endl;
 
-		find_min(output.time_vector_smooth,
+
+		find_min(output.encoder_vector_smooth,
 				 output.pressure_vector_smooth,
 				 output.pressure_min,
 				 output.phase_min);
 
-		find_max(output.time_vector_smooth,
+		find_max(output.encoder_vector_smooth,
 				 output.pressure_vector_smooth,
 				 output.pressure_max,
 				 output.phase_max);
@@ -204,10 +234,6 @@ void process_file(std::string file, output_data &output, options &optionsMenu)
 					 output.ion_min,
 					 output.ion_phase);
 
-		std::cout << "successfully found min and max" << std::endl;
-		*/
-
-		/*
 		if(optionsMenu.dataAnalysisMenu.spectrogram=="true")
 		{
 			build_spectrogram(cInput,
@@ -247,7 +273,52 @@ void process_file(std::string file, output_data &output, options &optionsMenu)
 						output.i_min,
 						output.downCrossOver,
 						output.upCrossOver);
-						*/
+
+        double Tin = 300.0;
+        double Pstatic = 1.00944683*1.0e5;
+        double R = 287.15;
+        double deltaL = 66.6/1000.0; //66.0/1000.0
+
+        //double C = 0.9;
+        //double eta = 0.079; 
+
+		double massFlowAverage = 0;
+		std::vector<double> massFlow;
+		std::vector<double> massFlowTime;
+
+		computeMassFlowRate(optionsMenu.dataAnalysisMenu.inletTemperature,
+				            optionsMenu.dataAnalysisMenu.staticPressure,
+							optionsMenu.dataAnalysisMenu.gasConstant,
+							output.areaFunction,
+							output.combustor_frequency,
+							optionsMenu.dataAnalysisMenu.inletLength,
+							optionsMenu.dataAnalysisMenu.C,
+							optionsMenu.dataAnalysisMenu.eta,
+							output.massFlowRateAir,
+							massFlow,
+							massFlowTime,
+							output.pressure_vector_smooth,
+							output.encoder_vector_smooth);
+
+        if (output.mass_flow_rate_fuel_1 > 10.0)
+            output.mass_flow_rate_fuel_1 = output.mass_flow_rate_fuel_1/1000.0;
+
+        if (output.mass_flow_rate_fuel_1 > 10.0)
+            output.mass_flow_rate_fuel_1 = output.mass_flow_rate_fuel_1/1000.0;
+	
+		output.equivalenceRatio = (output.mass_flow_rate_fuel_1
+				                   /output.massFlowRateAir)/(1.0/3.0984);
+
+		std::cout << "air mass flow average: " << output.massFlowRateAir << '\t'
+			      << "fuel mass flow rate: "   << output.mass_flow_rate_fuel_1 << '\t'
+				  << "equilance ratio: "       << output.equivalenceRatio << std::endl;
+		std::ofstream foutTest("testMFR.dat");
+		for (int i = 0; i < output.pressure_vector_smooth.size(); i++)
+		{
+		    foutTest << output.encoder_vector_smooth[i]  << '\t'
+				     << output.pressure_vector_smooth[i] << '\t'
+					 << massFlow[i] << std::endl;
+		}
 
 	}
 	else
@@ -257,6 +328,11 @@ void process_file(std::string file, output_data &output, options &optionsMenu)
 	std::cout << "Exiting proccessfile..." << std::endl;
 }
 
+static inline void rtrim(std::string &s) {
+    s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
+        return !std::isspace(ch);
+    }).base(), s.end());
+}
 
 void read_header_file_data(std::string file, output_data &output, int &skip_lines)
 {
@@ -306,6 +382,7 @@ void read_header_file_data(std::string file, output_data &output, int &skip_line
 		}
 		else if ((strncmp(line.c_str(),"H2 mass flow rate     [g/s]:", 18)==0))
 		{
+
 			size_t position = line.find(":");
 			std::string tmp = line.substr(position+2);
 			output.mass_flow_rate_fuel_2 = std::stod(tmp);
@@ -366,31 +443,33 @@ void read_header_file_data(std::string file, output_data &output, int &skip_line
 			std::string tmp = line.substr(position+3);
 			output.CO2 = std::stod(tmp);
 		}
-
 		else if (strncmp(line.c_str(),"O2:",3)==0)
 		{
 			size_t position = line.find(":");
 			std::string tmp = line.substr(position+3);
 			output.O2 = std::stod(tmp);
 		}
-
         else if (strncmp(line.c_str(),"Data collected on",17)==0)
         {
-            size_t position = line.find(":");
-            std::string time = line.substr(position-2);
+		    std::string dateInfo = line;
+			std::string timeInfo (" at ");
+			rtrim(dateInfo);
+		    if(dateInfo.find(timeInfo) != std::string::npos)
+			{
+                size_t position = line.find(":");
+                std::string time = line.substr(position-2);
+                std::istringstream ss(time);
+                std::string token;
+                std::vector<double> t;
 
-            std::istringstream ss(time);
-            std::string token;
+                while(std::getline(ss, token, ':')) {
+                    t.push_back(std::stod(token));
+                }
+ 
+                double tmp = t[0]*60*60 + t[1]*60.0 + t[2];
+                output.acquisition_time = tmp;
+			}
 
-            std::vector<double> t;
-
-            while(std::getline(ss, token, ':')) {
-                t.push_back(std::stod(token));
-            }
-
-            double tmp = t[0]*60*60 + t[1]*60.0 + t[2];
-
-            output.acquisition_time = tmp;
         }
 		else if ((strncmp(line.c_str(),
 				"Time [s]            Pressure [bar]",34)==0) ||
@@ -406,9 +485,26 @@ void read_header_file_data(std::string file, output_data &output, int &skip_line
 					"Time [s]            Pressure [bar]      Injector [volts]",56)==0))
 			{
 				encoder_colmn = 3;
+				output.pressure_colmn = 1;
+			}
+			if ((strncmp(line.c_str(),
+			    "Time [s]        Pressure [bar]  Position [volts]",48)==0))
+			{
+				encoder_colmn = 3;
+				output.pressure_colmn = 1;
 			}
 			else
+			{
 				encoder_colmn = 2;
+				output.pressure_colmn = 3;
+			}
+			if ((strncmp(line.c_str(), "Time [s]                Pressure [bar]          Position [volts]",
+							60)==0))
+			{
+				encoder_colmn = 3;
+				output.pressure_colmn = 1;
+			}
+			output.encoder_colmn = encoder_colmn-1;
 			exit_loop = true;
 		}
 

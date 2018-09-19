@@ -49,6 +49,7 @@ void read_settings_file(std::string file,
 			break;
 		if (strncmp(line.c_str(),"dataType {",10)==0)
 		{
+
 			/* Read primary settings */
 			while (!(strncmp(line.c_str(),"}",1)==0))
 			{
@@ -70,6 +71,16 @@ void read_settings_file(std::string file,
 					optionsMenu.mainMenu.fuelType=value;
 				if(setting=="ionProbe")
 					optionsMenu.mainMenu.ionProbe=value;
+				if(setting=="numberFuels")
+					optionsMenu.mainMenu.numberFuels=atoi(value.c_str());
+				if(setting=="fuelA")
+					optionsMenu.mainMenu.fuelA=value;
+				if(setting=="fuelB")
+					optionsMenu.mainMenu.fuelB=value;
+				if(setting==optionsMenu.mainMenu.fuelA)
+					optionsMenu.mainMenu.fuelPercent.push_back(atof(value.c_str()));
+				if(setting==optionsMenu.mainMenu.fuelB)
+					optionsMenu.mainMenu.fuelPercent.push_back(atof(value.c_str()));
 				if(setting=="gasoline")
 					optionsMenu.mainMenu.gasoline=atof(value.c_str());
 				if(setting=="heptane")
@@ -142,6 +153,36 @@ void read_settings_file(std::string file,
 					optionsMenu.dataAnalysisMenu.bodePlots=value;
 				if(setting=="computeRMS")
 					optionsMenu.dataAnalysisMenu.computeRMS=value;
+				if(setting=="computeMassFlowRate")
+					optionsMenu.dataAnalysisMenu.computeMassFlowRate=value;
+				if(setting=="inletTemperature")
+					optionsMenu.dataAnalysisMenu.inletTemperature=atof(value.c_str());
+				if(setting=="gasConstant")
+					optionsMenu.dataAnalysisMenu.gasConstant=atof(value.c_str());
+				if(setting=="inletArea")
+					optionsMenu.dataAnalysisMenu.inletArea=atof(value.c_str());
+				if(setting=="inletLength")
+					optionsMenu.dataAnalysisMenu.inletLength=atof(value.c_str());
+				if(setting=="C")
+					optionsMenu.dataAnalysisMenu.C=atof(value.c_str());
+				if(setting=="eta")
+					optionsMenu.dataAnalysisMenu.eta=atof(value.c_str());
+				if(setting=="spanCount")
+					optionsMenu.dataAnalysisMenu.spanCount=atoi(value.c_str());
+				if(setting=="inletRadius")
+					optionsMenu.dataAnalysisMenu.inletRadius=atof(value.c_str());
+				if(setting=="ballInternalRadius")
+					optionsMenu.dataAnalysisMenu.ballInternalRadius=atof(value.c_str());
+				if(setting=="lengthBall")
+					optionsMenu.dataAnalysisMenu.lengthBall=atof(value.c_str());
+				if(setting=="inletTemperature")
+					optionsMenu.dataAnalysisMenu.inletTemperature=atof(value.c_str());
+				if(setting=="staticPressure")
+					optionsMenu.dataAnalysisMenu.staticPressure=atof(value.c_str());
+				if(setting=="gasConstant")
+					optionsMenu.dataAnalysisMenu.gasConstant=atof(value.c_str());
+				if(setting=="inletLength")
+					optionsMenu.dataAnalysisMenu.inletLength=atof(value.c_str());
 			}
 		}
 

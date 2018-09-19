@@ -10,6 +10,10 @@ struct main_menu {
 	std::string combustorType;
 	std::string fuelType;
 	std::string ionProbe;
+	int numberFuels;
+	std::string fuelA;
+	std::string fuelB;
+	std::vector<double> fuelPercent;
 	double gasoline;
 	double heptane;
 	double ethanol;
@@ -35,6 +39,18 @@ struct data_analysis_menu {
 	std::string trackPeaks;
 	std::string bodePlots;
 	std::string computeRMS;
+	std::string computeMassFlowRate;
+	double inletTemperature;
+	double gasConstant;
+	double inletArea;
+	double inletLength;
+	double C;
+	double eta;
+	int spanCount;
+	double inletRadius;
+	double ballInternalRadius;
+	double lengthBall;
+	double staticPressure;
 };
 
 struct output_menu {

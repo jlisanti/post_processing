@@ -1,0 +1,2 @@
+    mdot_air	   mdot_fuel	   equiv_rat	   frequency	       max_P	       min_P	   max_phase	   min_phase	   Fuel_pres	        delP	          Po	          To	       P_rms	   ion_phase	     ion_min	         UHC	         NOx	          CO	         CO2	          O2
+ 0.000719583	         217	     1.07025	         230	     1.17937	    0.899472	     2.30229	     1.01421	6.95312e-310	6.95312e-310	     1.99997	 2.2957e-314	    0.100309	6.95312e-310	 3.12321e-85	           0	           0	           0	           0	           0
