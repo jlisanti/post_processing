@@ -103,29 +103,103 @@ double computeBallValveArea(valveProperties &valveGeom,
 {
 //	double ballInternalRadius = valveGeom.ballInternalRadius;
 	int xCount = valveGeom.spanCount;
-	//double xStep = ballInternalRadius/double(xCount);
-	//double x = 0;
 
 	/* inlet properties */
 	double inletRadius = valveGeom.inletRadius;
-
+	double valveRadius = valveGeom.valveRadius;
 
 	std::vector<double> inletX;
 	std::vector<double> inletY;
 
+	std::vector<double> valveInletX;
+	std::vector<double> valveInletY;
+
+	int valveSpanCount = 0;
+	int inletSpanCount = 0;
+
+	if (inletRadius > valveRadius)
+	{
+		valveSpanCount = valveGeom.spanCount;
+		inletSpanCount = floor((inletRadius/valveRadius)*double(valveSpanCount));
+	}
+	else
+	{
+		inletSpanCount = valveGeom.spanCount;
+		valveSpanCount = floor((valveRadius/inletRadius)*double(inletSpanCount));
+	}
+
+	/* define inlet coordinates */
 	circleCoordinates(inletRadius,
-			          valveGeom.spanCount,
+			          inletSpanCount,
 					  inletX,
 					  inletY);
+
+	circleCoordinates(valveRadius,
+			          valveSpanCount,
+					  valveInletX,
+					  valveInletY);
+
+	/*
+	std::ofstream fout("testCircle.dat");
+
+	int loopSize = 0;
+	int outerLoop = 0;
+
+	if(inletX.size() < valveInletX.size())
+	{
+		loopSize = inletX.size();
+		outerLoop = valveInletX.size();
+
+	    for (int i = 0; i < loopSize; i++)
+	    {
+		    fout << inletX[i] << '\t' 
+			     << inletY[i] << '\t'
+			     << valveInletX[i] << '\t'
+			     << valveInletY[i] << std::endl;
+
+	    }
+
+	    for (int i = loopSize; i < outerLoop; i++)
+	    {
+		    fout << '\t' << '\t' 
+			     << '\t' << '\t'
+			     << valveInletX[i] << '\t'
+			     << valveInletY[i] << std::endl;
+
+	    }
+
+	}
+	else
+	{
+		loopSize = valveInletX.size();
+		outerLoop = inletX.size();
+
+    	for (int i = 0; i < loopSize; i++)
+	    {
+	    	fout << inletX[i] << '\t' 
+		    	 << inletY[i] << '\t'
+		    	 << valveInletX[i] << '\t'
+		    	 << valveInletY[i] << std::endl;
+
+	    }
+	    for (int i = loopSize; i < outerLoop; i++)
+	    {
+		    fout << inletX[i] << '\t' 
+			     << inletY[i] << std::endl; 
+
+	    }
+	}
+	*/
+
+//	exit(1);
 
 	int yCount = valveGeom.spanCount;
 	//double yStep = ballInternalRadius/double(yCount);
 
-    
 	double h = valveGeom.h;
 	
-
 	double yOffSet = h*sin(alphaOpen);
+
 	std::vector<double> valveX;
 	std::vector<double> valveY;
 
@@ -138,32 +212,47 @@ double computeBallValveArea(valveProperties &valveGeom,
 	      the diameter of ball internal diameter does
 		  not equal the inlet diameter - change in future */
 
-	for (int i = 0; i < inletX.size(); i++)
+	for (int i = 0; i < valveInletX.size(); i++)
 	{
 		double l = sqrt(pow(inletY[i],2) + pow((h/2),2));
 		double alpha = asin(inletY[i]/l) + alphaOpen;
 
 		valveX.push_back(inletX[i]);
+
+//		double l = sqrt(pow(valveInletY[i],2) + pow((h/2),2));
+//		double alpha = asin(valveInletY[i]/l) + alphaOpen;
+
+		valveX.push_back(valveInletX[i]);
 		valveY.push_back(yp(l,alpha));
 		count++;
 
 		if(sqrt(pow(valveX[i],2) + pow(valveY[i],2)) < inletRadius)
 		{
 			valveOpenX.push_back(inletX[i]);
+
+//			valveOpenX.push_back(valveInletX[i]);
 			valveOpenY.push_back(yp(l,alpha));
 		}
 	}
-	for (int i = 0; i < inletX.size(); i++)
+
+	for (int i = 0; i < valveInletX.size(); i++)
 	{
 		double l = sqrt(pow(inletY[i],2) + pow((h/2),2));
 		double alpha = asin(inletY[i]/l) + alphaOpen;
 
-		valveX.push_back(inletX[i]);
+    	valveX.push_back(inletX[i]);
+
+//		double l = sqrt(pow(valveInletY[i],2) + pow((h/2),2));
+//		double alpha = asin(valveInletY[i]/l) + alphaOpen;
+
+//		valveX.push_back(valveInletX[i]);
 		valveY.push_back(-yp(l,alpha)+yOffSet);
 
 		if(sqrt(pow(valveX[i+count-1],2) + pow(valveY[i+count-1],2)) < inletRadius)
 		{
 			valveOpenX.push_back(inletX[i]);
+
+//			valveOpenX.push_back(valveInletX[i]);
 			valveOpenY.push_back(-yp(l,alpha)+yOffSet);
 		}
 	}
@@ -193,20 +282,34 @@ double computeBallValveArea(valveProperties &valveGeom,
 		if((inletX[i] > valveOpenX[0])) 
         {
 			if(inletY[i] > 0.0)
+//				areaCircle = areaCircle 
+//					+ (((inletY[i+1]+inletY[i])/2.0)*(inletX[i]-inletX[i+1]));
 				areaCircle = areaCircle 
-					+ (((inletY[i+1]+inletY[i])/2.0)*(inletX[i]-inletX[i+1]));
+					+ (((valveInletY[i+1]+valveInletY[i])/2.0)*(valveInletX[i]-valveInletX[i+1]));
+
 		}
 	}
 
 	double areaInlet = pow(inletRadius,2)*M_PI;
 	double areaOpen = 2.0*(0.25*areaInlet - areaEllipseNeg - areaCircle) 
 		                   - 2.0*areaEllipse;
+	if(valveRadius < inletRadius)
+		areaInlet = pow(valveRadius,2)*M_PI;
+
+	bool fullOpen = true;
+	for(int i = 0; i < valveX.size(); i++)
+	{
+		if(sqrt(pow(valveX[i],2)+pow(valveY[i],2)) > inletRadius)
+			fullOpen = false;
+	}
 	if(areaOpen < 0.0)
 		areaOpen = 0.0;
 	else if(alphaOpen == 0.0)
 		areaOpen = areaInlet;
 	else if(alphaOpen == 2.0*M_PI)
-		areaOpen = areaInlet;
+		areaOpen = areaInlet; //pow(valveRadius,2)*M_PI;
+	else if(fullOpen)
+		areaOpen = areaInlet; //pow(valveRadius,2)*M_PI;
 
 	return areaOpen;
 }
@@ -223,6 +326,20 @@ double yp(double h,
 	return h*sin(alpha);
 }
 
+double circleCoordinatesX(double radius,
+		                  double y)
+{
+    double angle = acos(y/radius); 
+    return sin(angle)*radius;
+}
+
+double circleCoordinatesY(double radius,
+		                  double x)
+{
+    double angle = asin(x/radius); 
+    return cos(angle)*radius;
+}
+
 void circleCoordinates(double radius,
 		               int angleSteps,
 		               std::vector<double> &x,
@@ -236,4 +353,85 @@ void circleCoordinates(double radius,
 		y.push_back(sin(angle)*radius);
 	}
 }
+
+
+	/* need to line up X cordinates between valve and inlet */
+
+/*
+	
+	std::ofstream foutb("before.dat");
+
+	for (int i = 0; i < inletX.size(); i++)
+	{
+		foutb << inletX[i] << '\t' 
+			 << valveInletX[i] << std::endl;
+	}
+
+	if(inletRadius > valveRadius)
+	{
+		std::cout << std::endl;
+		std::cout << "working on it...." << std::endl;
+		std::cout << std::endl;
+	    std::vector<double> tmpX;
+	    std::vector<double> tmpY;
+		int i = inletX.size();
+		while (inletX[i] <= valveRadius)
+		{
+			tmpX.push_back(inletX[i]); 
+			tmpY.push_back(circleCoordinatesY(valveRadius,
+					                          inletX[i]));
+
+		    std::cout << valveInletX[i] << '\t' << 
+				'\t' << tmpX[i] << inletRadius << std::endl;
+
+			i--;
+		}
+		for (int j = 0; j > tmpX.size(); j++)
+		{
+			valveInletX[valveInletX.size()-1-j] = tmpX[j];
+			valveInletY[valveInletX.size()-1-j] = tmpY[j];
+		}
+	}
+	else
+	{
+	    std::vector<double> tmpX;
+	    std::vector<double> tmpY;
+		int i = valveInletX.size();
+		while (inletX[i] < inletRadius)
+		{
+
+			tmpX.push_back(inletX[i]); 
+			tmpY.push_back(circleCoordinatesY(inletRadius,
+					                            inletX[i]));
+			i--;
+		}
+		for (int j = valveInletX.size()-1; j > i; j--)
+		{
+			valveInletX[j] = tmpX[j];
+			valveInletY[j] = tmpY[j];
+		}
+	}
+
+	std::cout << std::endl;
+	std::cout << "inletX size: " << inletX.size() << std::endl;
+	std::cout << std::endl;
+
+	std::ofstream fouta("afterInlet.dat");
+
+	for (int i = inletX.size(); i >= 0; i--)
+	{
+		fouta << i << '\t' 
+			 << inletX[i] << std::endl;
+	}
+
+	std::ofstream foutaa("afterValve.dat");
+
+	for (int i = valveInletX.size(); i >= 0; i--)
+	{
+		foutaa << i << '\t' 
+			 << valveInletX[i] << std::endl;
+	}
+
+
+*/
 

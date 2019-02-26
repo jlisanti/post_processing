@@ -146,19 +146,23 @@ void track_peaks_active(DataFileInput &cInput,
 				pMin = cInput.table_value(j,p_colmn);
 				pMinIndx = j;
 			}
+			/*
 			if(cInput.table_value(j,i_colmn) < iMin)
 			{
 				iMin = cInput.table_value(j,i_colmn);
 				iMinIndx = j;
 			}
+			*/
 		}
 
 		vt_max_p.push_back(cInput.table_value(pMaxIndx,t_colmn));
 		vt_min_p.push_back(cInput.table_value(pMinIndx,t_colmn));
-		vt_min_i.push_back(cInput.table_value(iMinIndx,t_colmn));
+		//vt_min_i.push_back(cInput.table_value(iMinIndx,t_colmn));
+		vt_min_i.push_back(0);
 		vp_max.push_back(pMax);
 		vp_min.push_back(pMin);
-		vi_min.push_back(iMin);
+		//vi_min.push_back(iMin);
+		vi_min.push_back(0);
 	}
 
 	std::cout << "finished tracking peaks" << std::endl;

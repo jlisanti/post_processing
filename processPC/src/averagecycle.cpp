@@ -7,19 +7,22 @@
 #include "datafileinput.h"
 #include "smoothencoder.h"
 #include "averagecycle.h"
+#include "findroots.h"
 
-		std::vector<double> encoder_average;
-		std::vector<double> pressure_average;
-		std::vector<double> ion_probe_average;
+//		std::vector<double> encoder_average;
+//		std::vector<double> pressure_average;
+//		std::vector<double> ion_probe_average;
 
 void average_cycle_active(DataFileInput &cInput, 
 		                  double window,
 						  double step,
+						  double pressureOffset,
 						  std::vector<double> &time_ssa,
 						  std::vector<double> &pressure_ssa,
 						  std::vector<double> &ion_ssa,
 						  int encoder_colmn,
 				          int pressur_colmn,
+						  int ion_colmn,
 				          std::vector<double> &encoder_average,
 				          std::vector<double> &pressure_average,
 						  std::vector<double> &ion_average,
@@ -29,12 +32,15 @@ void average_cycle_active(DataFileInput &cInput,
 						  std::vector<double> &up_cross_over,
 						  std::vector<double> &down_cross_over,
 						  std::vector<double> &areaFunction,
+						  std::string shiftCurve,
 						  std::string printFromStart)
 {
 	std::cout << "Average active valve data" << std::endl;
 	std::cout << "encoder colmn: " << encoder_colmn << std::endl;
 	std::vector<double> encoder_vec = smooth_encoder(cInput,
 			                                         encoder_colmn);
+
+	std::cout << "ion_comn " << ion_colmn << std::endl;
 	std::cout << "averaged encoder" << std::endl;
 	int steps = ceil(2.5/window);
 	int lines = cInput.file_length(); 
@@ -72,13 +78,6 @@ void average_cycle_active(DataFileInput &cInput,
 		tmp.clear();
 
 
-		/*
-        std::ofstream fout_a("area.dat");
-		for (int i = 0; i < areaFunction.size(); i++)
-			fout_a << i << '\t' << areaFunction[i] << std::endl;
-			*/
-
-
 		std::vector<double> encoder_clean;
 
 		for (int i = 0; i < encoder_vec.size(); i++)
@@ -89,14 +88,8 @@ void average_cycle_active(DataFileInput &cInput,
 				encoder_vec[i] = 0.0;
 		}
 
-		/*
-        std::ofstream fout_en("encoder.dat");
-	    for (int i = 0; i < encoder_vec.size(); i++)
-	    {
-		    fout_en << i << '\t'
-			        << encoder_vec[i] << std::endl;
-	    }
-		*/
+		std::cout << "encoder_open: " << encoder_open << std::endl;
+		std::cout << "encoder_close: " << encoder_close << std::endl;
 
 		/* loop through encoder file */
 		for (int i = 4; i < encoder_vec.size()-4; i++)
@@ -125,25 +118,6 @@ void average_cycle_active(DataFileInput &cInput,
 			
 		}
 
-		/*
-        std::ofstream fout_cross("crossover.dat");
-	    for (int i = 0; i < up_cross_over.size(); i++)
-	    {
-		*/
-			/*
-		    fout_cross << cInput.table_value(down_cross_over[i],0) << '\t'
-			           << cInput.table_value(down_cross_over[i],encoder_colmn) << '\t' 
-		               << cInput.table_value(up_cross_over[i],0) << '\t'
-			           << cInput.table_value(up_cross_over[i],encoder_colmn) << std::endl;
-					   */
-
-		/*
-		    fout_cross << cInput.table_value(down_cross_over[i],0) << '\t'
-			           << encoder_vec[down_cross_over[i]] << '\t' 
-		               << cInput.table_value(up_cross_over[i],0) << '\t'
-			           << encoder_vec[up_cross_over[i]] << std::endl;
-	    }
-	*/
 		std::vector<double> time_scatter;
 		std::vector<double> phase_scatter;
 
@@ -182,7 +156,7 @@ void average_cycle_active(DataFileInput &cInput,
 				phase_scatter.push_back(posPhase);
 			    time_scatter.push_back(posTime);
                 pressure_scatter.push_back(cInput.table_value(j,1));
-                ion_scatter.push_back(cInput.table_value(j,2));
+                ion_scatter.push_back(cInput.table_value(j,ion_colmn));
             }
         }
 
@@ -195,27 +169,9 @@ void average_cycle_active(DataFileInput &cInput,
 			encoder_scatter[i] = encoder_scatter[i] - encoder_close;
 		}
 		
-
-		/*
-	    std::ofstream fout1("scatter.dat",std::ios_base::app);
-        for (int i = 0; i < encoder_scatter.size(); i++)
-        {
-           fout1 << encoder_scatter[i]    << '\t'
-			     << phase_scatter[i]    << '\t'
-			     << time_scatter[i]     << '\t'
-                 << pressure_scatter[i] << '\t'
-                 << ion_scatter[i]      << std::endl;
-        }
-		*/
-
         // Average cycles into single curve
 	    int steps = ceil(2.5/step);
 
-		/*
-		std::vector<double> encoder_average;
-		std::vector<double> pressure_average;
-		std::vector<double> ion_probe_average;
-		*/
 
         double time_step_min = 0.0;
         double time_step_max = step + window;
@@ -245,35 +201,105 @@ void average_cycle_active(DataFileInput &cInput,
                     countStep++;
                 }
             }
-            //phase_average.push_back(phase_sum/double(countPhase));
 
 		    if(countStep != 0)
 		    {
 			    encoder_average.push_back(encoder_sum/double(countStep));
 			    pressure_average.push_back(press_time_sum/double(countStep));
-			    ion_probe_average.push_back(ion_time_sum/double(countStep));
+			    ion_average.push_back(ion_time_sum/double(countStep));
 		    }
 		    encoder_step = encoder_step + step;
             encoder_step_min = encoder_step - window;
             encoder_step_max = encoder_step + window;
         }
-
+		std::cout << "encoder average: " <<
+			encoder_average.size() << std::endl;
+		encoder_average[0] = 0.0;
+		/* compute shift to aline pressure min */
+		/* find pressure min */
 		/*
-	    for (int i = 0; i < encoder_average.size(); i++)
-	    {
-			encoder_average.push_back(encoder_average[i]/encoder_average[encoder_average.size()-1]);
-	    }
+		int minPresIndx = -1;
+		for (int i = 0; i < pressure_average.size(); i++)
+		{
+			double minTmp = 1.0e+10;
+			if(pressure_average[i] < minTmp)
+			{
+				minTmp = pressure_average[i];
+				minPresIndx = i;
+			}
+		}
+		double shift = encoder_average[minPresIndx] - pressureOffset;
 		*/
 
-		/*
-        std::ofstream fout2("average.dat");
-        for (int i = 0; i < encoder_average.size(); i++)
-        {
-           fout2 << encoder_average[i]     << '\t'
-                 << pressure_average[i] << '\t'
-                 << ion_probe_average[i]      << std::endl;
-        }
-		*/
+		double Pmin = 0.0;
+		double PminPhase = 0.0;
+		std::cout << "about to search for min" << std::endl;
+		find_min(encoder_average,
+				 pressure_average,
+				 Pmin,
+				 PminPhase);
+
+		std::cout << "found min" << std::endl;
+
+		double shift = pressureOffset - PminPhase;
+		if(shiftCurve=="false")
+			shift = 0.0;
+		std::cout << std::endl;
+		std::cout << "****finding min offset****" << std::endl;
+		std::cout << "    pMinPhase = " << PminPhase << std::endl;
+		std::cout << "    pOffset   = " << pressureOffset << std::endl;
+		std::cout << "    shift     = " << shift << std::endl;
+		/* shift for pressure offset */
+		for (int i = 0; i < encoder_average.size(); i++)
+		{
+			//double encoder_tmp = encoder_average[i] - pressureOffset;
+			double encoder_tmp = encoder_average[i] + shift;
+			if(encoder_tmp < 0.0)
+				encoder_tmp = 2.5 + encoder_tmp;
+			else if(encoder_tmp > 2.5)
+				encoder_tmp = encoder_tmp - 2.5;
+			encoder_average[i] = encoder_tmp;
+		}
+		std::vector<double> encoderTmp;
+		std::vector<double> pressureTmp;
+		std::vector<double> ionTmp;
+
+		while (encoderTmp.size() < encoder_average.size())
+		{
+			double max = -1.0;
+			double min = 10.0e+10;
+			int arrangeIndex = 0;
+			/*
+
+			for (int i = 0; i < encoderTmp.size(); i++)
+			{
+				if(encoderTmp[i] > max) 
+					max = encoderTmp[i];
+			}
+			*/
+			if(encoderTmp.size() != 0)
+				max = encoderTmp[encoderTmp.size()-1];
+		    for (int i = 0; i < encoder_average.size(); i++)
+		    {
+			    if((encoder_average[i] < min) && (encoder_average[i] > max)) 
+				{
+					min = encoder_average[i]; 
+					arrangeIndex = i;
+				}
+		    }
+			encoderTmp.push_back(encoder_average[arrangeIndex]);
+			pressureTmp.push_back(pressure_average[arrangeIndex]);
+			ionTmp.push_back(ion_average[arrangeIndex]);
+		}
+
+		encoder_average.clear();
+		encoder_average = encoderTmp;
+
+		pressure_average.clear();
+		pressure_average = pressureTmp;
+
+		ion_average.clear();
+		ion_average = ionTmp;
 	}
 }
 
@@ -519,16 +545,18 @@ void average_files(std::vector<double> time_scatter,
 void average_files_active(std::vector<double> encoder_scatter,
 		                  std::vector<double> pressure_scatter,
 				          std::vector<double> ion_scatter,
+						  std::vector<double> mass_scatter,
 				          std::vector<double> &encoder_average,
 				          std::vector<double> &pressure_average,
 				          std::vector<double> &ion_average,
+						  std::vector<double> &mass_average,
 				          std::string ion_probe)
 {
 	double max_encoder = *max_element(std::begin(encoder_scatter), std::end(encoder_scatter));
-	int steps = 100;
+	int steps = 60;
 
 	double step = max_encoder/double(steps);
-	double window = 1.5*step;
+	double window = 5.0*step;
     //int steps = window/step;//ceil((1.0/frequency)/step);
 
     double encoder_step_min = 0.0;
@@ -537,10 +565,11 @@ void average_files_active(std::vector<double> encoder_scatter,
 
     for (int i = 0; i < steps; i++)
     {
-        double countEncoder = 0;
-        double press_encoder_sum = 0;
-        double encoder_sum = 0;
-        double ion_encoder_sum = 0;
+        double countEncoder = 0.0;
+        double press_encoder_sum = 0.0;
+        double encoder_sum = 0.0;
+        double ion_encoder_sum = 0.0;
+        double mass_encoder_sum = 0.0;
 
         for (int j = 0; j < encoder_scatter.size(); j++)
         {
@@ -548,6 +577,7 @@ void average_files_active(std::vector<double> encoder_scatter,
             {
                 press_encoder_sum = press_encoder_sum + pressure_scatter[j];
                 encoder_sum = encoder_sum + encoder_scatter[j];
+				mass_encoder_sum = mass_encoder_sum + mass_scatter[j];
 				if(ion_probe=="true")
                     ion_encoder_sum   = ion_encoder_sum   + ion_scatter[j];
                 countEncoder++;
@@ -557,6 +587,7 @@ void average_files_active(std::vector<double> encoder_scatter,
 		{
 			encoder_average.push_back(encoder_sum/double(countEncoder));
 			pressure_average.push_back(press_encoder_sum/double(countEncoder));
+			mass_average.push_back(mass_encoder_sum/double(countEncoder));
 			if(ion_probe=="true")
 			    ion_average.push_back(ion_encoder_sum/double(countEncoder));
 		}

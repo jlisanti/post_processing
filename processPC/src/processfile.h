@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "readinputfiles.h"
+#include "menu.h"
 
 typedef struct {
 	double mass_flow_rate_air;
@@ -58,6 +59,8 @@ typedef struct {
 	std::vector<double> mdot_inlet;
 	std::vector<double> area_inlet;
 	std::vector<double> area_inlet_2;
+	std::vector<double> airMassFlow;
+	std::vector<double> airMassFlowTime;
 	double total_pressure;
 	double total_temperature;
 	double fuel_pressure;
@@ -96,9 +99,13 @@ typedef struct {
 	double CO;
 	double CO2;
 	double O2;
+	std::vector<double> bodeP;
+	std::vector<double> bodePprime;
+	double gasProbePosition;
+	double airOn;
 } output_data;
 
-void process_file(std::string file, output_data &output, options &optionsMenu);
+void process_file(std::string file, output_data &output, options &optionsMenu, Menu &cMenu);
 void read_header_file_data(std::string file, output_data &output, int &skip_lines);
 
 #endif

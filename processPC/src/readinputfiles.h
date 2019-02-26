@@ -27,6 +27,7 @@ struct data_conditioning_menu {
 	int kMax;
 	double windowSize;
 	double stepSize;
+	double pressureOffset;
 };
 
 struct data_analysis_menu {
@@ -55,6 +56,7 @@ struct data_analysis_menu {
 
 struct output_menu {
 	std::string printFromOpen;
+	std::string shiftCurve;
 };
 
 struct options {

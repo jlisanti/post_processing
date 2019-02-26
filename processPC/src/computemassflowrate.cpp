@@ -35,6 +35,8 @@ void computeMassFlowRate(double &inletTemperature,
 	double eta = 0.15; 
 	*/
 
+	std::cout << " Computing mass flow rate" << std::endl;
+
 	/* compute time vector */
 	double cycleLength = 1.0/frequency;
 	double dt = cycleLength/double(pressure.size());
@@ -54,16 +56,13 @@ void computeMassFlowRate(double &inletTemperature,
 		//double dt = time[i+1] - time[i];
 
 		double deltaP = - staticPressure + pressure[i]*1.0e5;
-		double inletArea = ballValveArea(double(i)*thetaStep,
+		/* compute angle from encoder value */
+		thetaStep = M_PI/2.5;
+		//double inletArea = ballValveArea(double(i)*thetaStep,
+			//	                         areaFunction);
+		double inletArea = ballValveArea(encoder[i]*thetaStep,
 				                         areaFunction);
-				  
 
-		/*
-		std::cout << std::endl;
-		std::cout << "dp: "   << deltaP << '\n'
-			      << "area: " << inletArea << std::endl; 
-		std::cout << std::endl;
-		*/
 		if((dt > 0.0))
 		{
 			if(inletArea > 0.0)
@@ -73,12 +72,15 @@ void computeMassFlowRate(double &inletTemperature,
 		        				rho,
 		   	    				mdoti,
 		   	    				C);
-			    //Cfi = 10.0;
+//				std::cout << Cfi << '\t' << mdoti << '\t' << inletArea << std::endl;
+
 			    double mdotii = massFlowRate(dt,
 			    		                     Cfi,
 			    			    			 inletLength,
 			    			    			 mdoti,
-			    			    			 rho,
+			    			    			 //rho,
+											 staticPressure,
+											 inletTemperature,
 			    			    			 inletArea,
 			    			    			 deltaP,
 			    							 eta);
@@ -120,15 +122,23 @@ double massFlowRate(double dt,
 		            double Cfi,
 				    double deltaL,
 			        double mdoti,
-				    double rho,
+				    //double rho,
+					double T1,
+					double P1,
 				    double area,
 				    double deltaP,
 					double eta)
 {
+	if(deltaP < 0.0)
+        return Cfi*P1*(1.0-((2.0*deltaP)/(3.0*P1)))*sqrt(-deltaP/(P1*T1));
+    else
+        return Cfi*P1*(1.0-((2.0*deltaP)/(3.0*P1)))*sqrt(deltaP/(P1*T1));
+	/*
 	return mdoti - (eta*(((dt*Cfi)/(2.0*deltaL))
 		            *(mdoti/(rho*area))
 				    *std::abs(mdoti)
 				 + ((dt*deltaP*area)/deltaL)));
+				 */
 }
 
 double Cf(double deltaP,
@@ -137,8 +147,11 @@ double Cf(double deltaP,
 		  double massFlowRate,
 		  double C)
 {
+    return C*pow(area,2)*pow(10.0,7);
+	/*
 	if(massFlowRate == 0.0)
 		return 0.0;
 	else
-		return C*(2.0*rho*pow(area,2)*(deltaP/pow(massFlowRate,2)));
+		return C*(2.0*rho*pow(area,2)*(std::abs(deltaP)/pow(massFlowRate,2)));
+		*/
 }

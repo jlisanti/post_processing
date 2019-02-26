@@ -215,8 +215,10 @@ int ssa(DataFileInput &cInput,
     }
     for (int t = 0; t < N; t++)
     {
-        foutR << t*timestep << '\t';
+		double time_value = double(t)*timestep;
+        foutR << time_value << '\t';
         foutR << R[t] << std::endl;
+        pressure[t] = R[t];
     }
 
 	return 0;

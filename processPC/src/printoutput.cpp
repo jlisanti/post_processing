@@ -35,426 +35,488 @@ int round_value(int number, int multiple)
 
 void print_output_active (output_data &output, options &optionsMenu)
 {
-	std::cout << " Printing output" << std::endl;
-	std::string mainFileOutput;
-	std::string fileFront;
-
-	double encoderStep = M_PI/2.5;
-
-	// Round combustor frequency
-	output.combustor_frequency = round_value(output.combustor_frequency,5);
-	std::ostringstream frequency;
-	std::ostringstream massFlowRateA;
-
-	if (output.mass_flow_rate_fuel_1 < 10.0)
-		output.mass_flow_rate_fuel_1 = output.mass_flow_rate_fuel_1*1000.0;
-
-	if (output.mass_flow_rate_fuel_1 < 10.0)
-		output.mass_flow_rate_fuel_1 = output.mass_flow_rate_fuel_1*1000.0;
-
-	frequency << int(output.combustor_frequency);
-	massFlowRateA << int(output.mass_flow_rate_fuel_1); 
-
-	fileFront = frequency.str() + "Hz_" + massFlowRateA.str() + "mgps_" 
-		+ optionsMenu.mainMenu.fuelA;
-
-	if(optionsMenu.mainMenu.numberFuels > 1)
+	/*
+	if()
 	{
-		std::ostringstream massFlowRateB;
-	    if (output.mass_flow_rate_fuel_2 < 10.0)
-	    	output.mass_flow_rate_fuel_2 = output.mass_flow_rate_fuel_2*1000.0;
+	*/
+    	std::cout << " Printing output" << std::endl;
+    	std::string mainFileOutput;
+	    std::string fileFront;
 
-	    massFlowRateB << int(output.mass_flow_rate_fuel_2); 
+     	double encoderStep = M_PI/2.5;
+
+    	// Round combustor frequency
+    	output.combustor_frequency = round_value(output.combustor_frequency,5);
+	    std::ostringstream frequency;
+     	std::ostringstream massFlowRateA;
+		std::ostringstream airMassFlow;
+
+	    if (output.mass_flow_rate_fuel_1 < 10.0)
+	    	output.mass_flow_rate_fuel_1 = output.mass_flow_rate_fuel_1*1000.0;
+
+	    if (output.mass_flow_rate_fuel_1 < 10.0)
+	    	output.mass_flow_rate_fuel_1 = output.mass_flow_rate_fuel_1*1000.0;
+
+	    int fuelMassFlowRate = round_value(output.mass_flow_rate_fuel_1,10);
+
+	    frequency << int(output.combustor_frequency);
+	    massFlowRateA << fuelMassFlowRate; 
+		airMassFlow << output.airOn;
 
 	    fileFront = frequency.str() + "Hz_" + massFlowRateA.str() + "mgps_" 
-	    	+ optionsMenu.mainMenu.fuelA + massFlowRateB.str() + "mgps_" 
-	    	+ optionsMenu.mainMenu.fuelB;
-	}
+	    	+ optionsMenu.mainMenu.fuelA + "_" + airMassFlow.str() + "gps_air";
 
-	mainFileOutput = fileFront + "_output.dat";
-
-    std::string averagedFile    = fileFront + "_scatter.dat";
-    std::string averagedCurve   = fileFront + "_averaged.dat";
-
-
-
-	/* check for duplicate cases and average */
-	bool end = false;
-	std::string fileNameNext = "none";
-
-	if(file_exists(mainFileOutput))
-	{
-		/*
-		std::cout << "***************" << std::endl;
-		std::cout << mainFileOutput << '\t' << fileNameNext << std::endl;
-		std::cout << "***************" << std::endl;
-		*/
-
-	    for (int i = 0; i < 100; i++)
+	    if(optionsMenu.mainMenu.numberFuels > 1)
 	    {
-		    std::ostringstream fileIndex;
-		    std::ostringstream fileIndexi;
-		    fileIndex  << (i+1);
-		    fileIndexi << (i+2);
+		    std::ostringstream massFlowRateB;
+	        if (output.mass_flow_rate_fuel_2 < 10.0)
+	        	output.mass_flow_rate_fuel_2 = output.mass_flow_rate_fuel_2*1000.0;
 
-		    fileNameNext   = fileFront + "_output_" + fileIndex.str() + ".dat";
+	        massFlowRateB << int(output.mass_flow_rate_fuel_2); 
 
-			std::cout << std::endl;
-			std::cout << "file name " << mainFileOutput << '\t'
-				      << "next      " << fileNameNext   << std::endl;
-			std::cout << std::endl;
+	        fileFront = frequency.str() + "Hz_" + massFlowRateA.str() + "mgps_" 
+	    	    + optionsMenu.mainMenu.fuelA + massFlowRateB.str() + "mgps_" 
+	    	    + optionsMenu.mainMenu.fuelB;
+	    }
+		
+		if(optionsMenu.mainMenu.fuelType=="liquid")
+		{
+     	    std::ostringstream totalTemperature;
+			totalTemperature << output.total_temperature;
+	        fileFront = frequency.str() + "Hz_" + totalTemperature.str() + "C_" 
+				+ optionsMenu.mainMenu.fuelA + "_" + airMassFlow.str() + "gps_air";
+		}
 
-		    if(!file_exists(fileNameNext))
-		    {
-				end = true;
-			    // Add to averaged file
-			    // Check if averaged file exist
-			    // Combine
-		        if(!file_exists(averagedFile))
-			    {
-				    // read existing file
-				    int skip_lines = 0;
-				    DataFileInput cInput(mainFileOutput,skip_lines);
+	    mainFileOutput = fileFront + "_output.dat";
 
-				    //  create file
-				    std::ofstream fout_avg(averagedFile);
-				
-				    int count = 0;
+        std::string averagedFile    = fileFront + "_scatter.dat";
+        std::string averagedCurve   = fileFront + "_averaged.dat";
+
+     	/* check for duplicate cases and average */
+    	bool end = false;
+    	std::string fileNameNext = "none";
+
+    	int fileNameIndex = 0; 
+
+	    if(file_exists(mainFileOutput))
+	    {
+	    	std::cout << "***************" << std::endl;
+     		std::cout << mainFileOutput << '\t' << fileNameNext << std::endl;
+    		std::cout << "***************" << std::endl;
+
+	        for (int i = 0; i < 100; i++)
+	        {
+		        std::ostringstream fileIndex;
+		        std::ostringstream fileIndexi;
+		        fileIndex  << (i+1);
+		        fileIndexi << (i+2);
+
+    			std::string tmpString = fileIndex.str();
+    			fileNameIndex = atoi(tmpString.c_str());
+ 
+    		    fileNameNext   = fileFront + "_output_" + fileIndex.str() + ".dat";
 
 
-	                if(optionsMenu.mainMenu.ionProbe=="true")
-				    {
-				        for (int j = 0; j < cInput.file_length(); j++)
+    		    if(!file_exists(fileNameNext))
+    		    {
+    				end = true;
+			        // Add to averaged file
+			        // Check if averaged file exist
+			        // Combine
+		            if(!file_exists(averagedFile))
+			        {
+			    	    // read existing file
+			    	    int skip_lines = 0;
+			    	    DataFileInput cInput(mainFileOutput,skip_lines);
+
+			    	    //  create file
+		                std::ofstream fout_avg(averagedFile);
+			
+				        int count = 0;
+
+
+	                    if(optionsMenu.mainMenu.ionProbe=="true")
 				        {
-					        for (int k = count; k < output.encoder_vector_smooth.size(); k++)
-					        {
-						        if (cInput.table_value(j,0) > output.encoder_vector_smooth[k])
-						        {
-							        fout_avg << output.encoder_vector_smooth[k] << '\t'
-								             << output.pressure_vector_smooth[k] << '\t'
-								             << output.ion_vector_smooth[k] << '\t'
-			                                 << ballValveArea(output.encoder_vector_smooth[i]*encoderStep,
-					                            output.areaFunction) << '\t'
-								             << std::endl;
-							        count++;
-						        }
-						        else
-						        {
-							        fout_avg << cInput.table_value(j,0) << '\t' 
-								             << cInput.table_value(j,1) << '\t'
-								             << cInput.table_value(j,2) << '\t'
-								             << cInput.table_value(j,3) << std::endl; 
-							        break;
-						        }
-					        }
+				            for (int j = 0; j < cInput.file_length(); j++)
+				            {
+					            for (int k = count; k < output.encoder_vector_smooth.size(); k++)
+					            {
+						            if (cInput.table_value(j,0) > output.encoder_vector_smooth[k])
+						            {
+							            fout_avg << output.encoder_vector_smooth[k]  << '\t'
+								                 << output.pressure_vector_smooth[k] << '\t'
+								                 << output.ion_vector_smooth[k]      << '\t'
+			                                     << ballValveArea(output.encoder_vector_smooth[i]*encoderStep,
+					                                output.areaFunction)             << '\t'
+						                         << output.airMassFlow[i]            << std::endl;
+							            count++;
+						            }
+						            else
+						            {
+							            fout_avg << cInput.table_value(j,0) << '\t' 
+								                 << cInput.table_value(j,1) << '\t'
+								                 << cInput.table_value(j,2) << '\t'
+								                 << cInput.table_value(j,3) << '\t'
+								                 << cInput.table_value(j,4) << std::endl; 
+							            break;
+						            }
+					            }
+				            }
 				        }
-				    }
-				    else
-				    {
-				        for (int j = 0; j < cInput.file_length(); j++)
+				        else
 				        {
-					        for (int k = count; k < output.encoder_vector_smooth.size(); k++)
-					        {
-						        if (cInput.table_value(j,0) > output.encoder_vector_smooth[k])
-						        {
-							        fout_avg << output.encoder_vector_smooth[k] << '\t'
-								             << output.pressure_vector_smooth[k] << '\t'
-			                                 << ballValveArea(output.encoder_vector_smooth[i]*encoderStep,
-					                            output.areaFunction) << '\t'
-								             << std::endl;
-							        count++;
-						        }
-						        else
-						        {
-							        fout_avg << cInput.table_value(j,0) << '\t' 
-								             << cInput.table_value(j,1) << '\t'
-								             << cInput.table_value(j,2) << std::endl; 
-							        break;
-						        }
-					        }
+				            for (int j = 0; j < cInput.file_length(); j++)
+				            {
+					            for (int k = count; k < output.encoder_vector_smooth.size(); k++)
+					            {
+						            if (cInput.table_value(j,0) > output.encoder_vector_smooth[k])
+						            {
+							            fout_avg << output.encoder_vector_smooth[k]  << '\t'
+								                 << output.pressure_vector_smooth[k] << '\t'
+			                                     << ballValveArea(output.encoder_vector_smooth[i]*encoderStep,
+					                                output.areaFunction)             << '\t'
+						                         << output.airMassFlow[i]            << std::endl;
+							            count++;
+						            }
+						            else
+						            {
+							            fout_avg << cInput.table_value(j,0) << '\t' 
+								                 << cInput.table_value(j,1) << '\t'
+								                 << cInput.table_value(j,2) << '\t'
+								                 << cInput.table_value(j,3) << std::endl; 
+							            break;
+						            }
+					            }
+				            }
 				        }
-				    }
-			    }
-		    	else
-		    	{
-					std::cout << "*********" << std::endl;
-					std::cout << "fileNext did not exist" << std::endl;
-					std::cout << "*********" << std::endl;
-		    		// read existing file
-		    		int skip_lines = 0;
-		    		DataFileInput cInput(averagedFile,skip_lines);
+			        }
+		    	    else
+		    	    {
+		    	    	// read existing file
+		    	    	int skip_lines = 0;
+		    	    	DataFileInput cInput(averagedFile,skip_lines);
 
-		    		//  create file
-		    		std::ofstream fout_avg(averagedFile);
+		    		    //  create file
+		    		    std::ofstream fout_avg(averagedFile);
 
-		    		int count = 0;
+		    		    int count = 0;
 
-
-	                if(optionsMenu.mainMenu.ionProbe=="true")
-			    	{
-			    	    for (int j = 0; j < cInput.file_length(); j++)
+	                    if(optionsMenu.mainMenu.ionProbe=="true")
 			    	    {
-			    		    for (int k = count; k < output.encoder_vector_smooth.size(); k++)
-			    		    {
-			    			    if (cInput.table_value(j,0) > output.encoder_vector_smooth[k])
-			    			    {
-			    				    fout_avg << output.encoder_vector_smooth[k] << '\t'
-			    				             << output.pressure_vector_smooth[k] << '\t'
-			    					         << output.ion_vector_smooth[k] << '\t'
-			                                 << ballValveArea(output.encoder_vector_smooth[i]*encoderStep,
-			    		                        output.areaFunction) << '\t'
-			    					         << std::endl;
-			    				    count++;
-			    			    }
-			    			    else
-			    			    {
-			    				    fout_avg << cInput.table_value(j,0) << '\t' 
-			        					     << cInput.table_value(j,1) << '\t'
-			        					     << cInput.table_value(j,2) << '\t'
-					        			     << cInput.table_value(j,3) << std::endl; 
-						    	break;
-						        }
-					        }
+			    	        for (int j = 0; j < cInput.file_length(); j++)
+			    	        {
+			    		        for (int k = count; k < output.encoder_vector_smooth.size(); k++)
+			    		        {
+			    			        if (cInput.table_value(j,0) > output.encoder_vector_smooth[k])
+			    			        {
+			    				        fout_avg << output.encoder_vector_smooth[k]  << '\t'
+			    				                 << output.pressure_vector_smooth[k] << '\t'
+			    					             << output.ion_vector_smooth[k]      << '\t'
+			                                     << ballValveArea(output.encoder_vector_smooth[i]*encoderStep,
+			    		                            output.areaFunction)             << '\t'
+						                         << output.airMassFlow[i]            << std::endl;
+			    				        count++;
+			    			        }
+			    			        else
+			    			        {
+			    				        fout_avg << cInput.table_value(j,0) << '\t' 
+			        				    	     << cInput.table_value(j,1) << '\t'
+			        				    	     << cInput.table_value(j,2) << '\t'
+			        			     		     << cInput.table_value(j,3) << '\t'
+					        	    		     << cInput.table_value(j,4) << std::endl; 
+						    	        break;
+						            }
+					            }
+				            }
+				        }
+				        else
+				        {
+				            for (int j = 0; j < cInput.file_length(); j++)
+				            {
+					            for (int k = count; k < output.encoder_vector_smooth.size(); k++)
+					            {
+						            if (cInput.table_value(j,0) > output.encoder_vector_smooth[k])
+						            {
+							            fout_avg << output.encoder_vector_smooth[k]  << '\t'
+							                     << output.pressure_vector_smooth[k] << '\t'
+			                                     << ballValveArea(output.encoder_vector_smooth[i]*encoderStep,
+					                                output.areaFunction)             << '\t'
+		    				                     << output.airMassFlow[i]            << std::endl;
+		    					        count++;
+		    				        }
+		    				        else
+		    				        {
+		    					        fout_avg << cInput.table_value(j,0) << '\t' 
+	     							             << cInput.table_value(j,1) << '\t'
+	    							             << cInput.table_value(j,2) << '\t'
+	    							             << cInput.table_value(j,3) << std::endl; 
+	    						        break;
+	    					        }
+	    				        }
+	    			        }
+	    			    }
+	    		    }
+
+	    			DataFileInput cInput_avg(averagedFile,0);
+	    			std::vector<double> p_vec;
+	    			std::vector<double> e_vec;
+	    			std::vector<double> i_vec;
+	    			std::vector<double> m_vec;
+	    			std::vector<double> p_scat;
+	    			std::vector<double> e_scat;
+	    			std::vector<double> i_scat;
+	    			std::vector<double> m_scat;
+		            std::vector<double> tmp1 = cInput_avg.table_column(0);
+                    std::vector<double> tmp2 = cInput_avg.table_column(1);
+                    std::vector<double> tmp3 = cInput_avg.table_column(2);
+                    std::vector<double> tmp4 = cInput_avg.table_column(3);
+
+			    	average_files_active(tmp1,
+					    		         tmp2,
+					    		         tmp3,
+					    				 tmp4,
+					    		         e_vec,
+					    		         p_vec,
+					    		         i_vec,
+				    					 m_vec,
+				    			         optionsMenu.mainMenu.ionProbe);
+
+				    std::cout << "printing averaged curve" << std::endl;
+				    std::ofstream fout_curv(averagedCurve);
+	                if(optionsMenu.mainMenu.ionProbe=="true")
+				    {
+				        for (int i = 0; i < e_vec.size(); i++)
+				        {
+				    	    fout_curv << e_vec[i] << '\t'
+						              << p_vec[i] << '\t'
+							          << i_vec[i] << '\t'
+			                          << ballValveArea(e_vec[i]*encoderStep,
+					                     output.areaFunction) << '\t'
+					    			  << m_vec[i] << std::endl;
 				        }
 				    }
 				    else
 				    {
-				        for (int j = 0; j < cInput.file_length(); j++)
+				        for (int i = 0; i < e_vec.size(); i++)
 				        {
-					        for (int k = count; k < output.encoder_vector_smooth.size(); k++)
-					        {
-						        if (cInput.table_value(j,0) > output.encoder_vector_smooth[k])
-						        {
-							        fout_avg << output.encoder_vector_smooth[k] << '\t'
-							                 << output.pressure_vector_smooth[k] << '\t'
-			                                 << ballValveArea(output.encoder_vector_smooth[i]*encoderStep,
-					                            output.areaFunction) << '\t'
-								             << std::endl;
-							        count++;
-						        }
-						        else
-						        {
-							        fout_avg << cInput.table_value(j,0) << '\t' 
-								             << cInput.table_value(j,1) << '\t'
-								             << cInput.table_value(j,2) << std::endl; 
-							        break;
-						        }
-					        }
+					        fout_curv << e_vec[i] << '\t'
+						              << p_vec[i] << '\t'
+			                          << ballValveArea(e_vec[i]*encoderStep,
+					                     output.areaFunction) << '\t'
+					    			  << m_vec[i] << std::endl;
 				        }
 				    }
-			    }
+		            mainFileOutput = fileFront + "_output_" + fileIndex.str()  + ".dat";
+		            fileNameNext   = fileFront + "_output_" + fileIndexi.str() + ".dat";
+		        }
 
-				DataFileInput cInput_avg(averagedFile,0);
-				std::vector<double> p_vec;
-				std::vector<double> e_vec;
-				std::vector<double> i_vec;
-				std::vector<double> p_scat;
-				std::vector<double> e_scat;
-				std::vector<double> i_scat;
-		        std::vector<double> tmp1 = cInput_avg.table_column(0);
-                std::vector<double> tmp2 = cInput_avg.table_column(1);
-                std::vector<double> tmp3 = cInput_avg.table_column(2);
-
-				average_files_active(tmp1,
-							         tmp2,
-							         tmp3,
-							         e_vec,
-							         p_vec,
-							         i_vec,
-							         optionsMenu.mainMenu.ionProbe);
-
-				std::cout << "printing averaged curve" << std::endl;
-				std::ofstream fout_curv(averagedCurve);
-	            if(optionsMenu.mainMenu.ionProbe=="true")
-				{
-				    for (int i = 0; i < e_vec.size(); i++)
-				    {
-					    fout_curv << e_vec[i] << '\t'
-						          << p_vec[i] << '\t'
-							      << i_vec[i] << '\t'
-			                      << ballValveArea(e_vec[i]*encoderStep,
-					                 output.areaFunction) << '\t'
-					              << std::endl;
-				    }
-				}
-				else
-				{
-				    for (int i = 0; i < e_vec.size(); i++)
-				    {
-					    fout_curv << e_vec[i] << '\t'
-						          << p_vec[i] << '\t'
-			                      << ballValveArea(e_vec[i]*encoderStep,
-					                 output.areaFunction) << '\t'
-					              << std::endl;
-				    }
-				}
-
-		        mainFileOutput = fileFront + "_output_" + fileIndex.str()  + ".dat";
-		        fileNameNext   = fileFront + "_output_" + fileIndexi.str() + ".dat";
+	            if(end)	
+			        break;
 		    }
-
-	        if(end)	
-			    break;
-		}
-
-	}
-
-    std::string spectrumFile    = fileFront + "_spectrum.dat";
-    std::string spectrogramFile = fileFront + "_spectrogram.dat";
-
-    std::string scatterFile     = fileFront + "_pressure_scatter.dat";
-    std::string pMaxFile        = fileFront + "_p_max_peaks.dat";
-    std::string pMinFile        = fileFront + "_p_min_peaks.dat";
-	std::string peaksFile       = fileFront + "_peaks.dat";
-
-	if(optionsMenu.mainMenu.ionProbe=="true")
-	{
-	    std::ofstream foutPrimary(mainFileOutput);
-	    for (int i = 0; i < output.encoder_vector_smooth.size(); i++)
-	    {
-		    foutPrimary << output.encoder_vector_smooth[i]    << '\t'
-		    	        << output.pressure_vector_smooth[i]   << '\t'
-		    	        << output.ion_vector_smooth[i]        << '\t'
-		    	        << ballValveArea(output.encoder_vector_smooth[i]*encoderStep,
-		    			           output.areaFunction) << '\t'
-		    	        << std::endl;
 	    }
-	}
-	else
-	{
-	    std::ofstream foutPrimary(mainFileOutput);
-	    for (int i = 0; i < output.encoder_vector_smooth.size(); i++)
+
+        std::string spectrumFile    = fileFront + "_spectrum.dat";
+        std::string spectrogramFile = fileFront + "_spectrogram.dat";
+
+        std::string scatterFile     = fileFront + "_pressure_scatter.dat";
+        std::string pMaxFile        = fileFront + "_p_max_peaks.dat";
+        std::string pMinFile        = fileFront + "_p_min_peaks.dat";
+	    std::string peaksFile       = fileFront + "_peaks.dat";
+
+	    std::string bodeFile        = fileFront + "_bode.dat";
+
+	    std::cout << "Bode ************** " << '\n'
+	    	<< "fileNameIndex: " << fileNameIndex << std::endl;
+
+	    if(fileNameIndex != 0)
 	    {
-		    foutPrimary << output.encoder_vector_smooth[i]    << '\t'
-		    	        << output.pressure_vector_smooth[i]   << '\t'
-		    	        << ballValveArea(output.encoder_vector_smooth[i]*encoderStep,
-		    			           output.areaFunction) << '\t'
-		    	        << std::endl;
+		    std::stringstream intTostring;
+		    intTostring << fileNameIndex;
+		    std::cout << "inside************" << std::endl;
+		    std::cout << fileNameIndex << '\t' << intTostring.str() << std::endl;
+            spectrumFile    = fileFront + "_spectrum_" + intTostring.str() + ".dat";
+            spectrogramFile = fileFront + "_spectrogram_" + intTostring.str() + ".dat";
+
+            scatterFile     = fileFront + "_pressure_scatter_" + intTostring.str() + ".dat";
+            pMaxFile        = fileFront + "_p_max_peaks_" + intTostring.str() + ".dat";
+            pMinFile        = fileFront + "_p_min_peaks_" + intTostring.str() + ".dat";
+	        peaksFile       = fileFront + "_peaks_" + intTostring.str() + ".dat";
+
+	        bodeFile        = fileFront + "_bode_" + intTostring.str() + ".dat";
 	    }
-	}
 
-	if (!file_exists("combustor_data.dat"))
-	{
-		std::ofstream fout3("combustor_data.dat");
-		fout3 << std::setw(12) << "mdot_air"  << '\t'
-			  << std::setw(12) << "mdot_fuel" << '\t'
-			  << std::setw(12) << "equiv_rat" << '\t'
-			  << std::setw(12) << "frequency" << '\t'
-			  << std::setw(12) << "max_P" << '\t'
-			  << std::setw(12) << "min_P" << '\t'
-			  << std::setw(12) << "max_phase" << '\t'
-			  << std::setw(12) << "min_phase" << '\t'
-			  << std::setw(12) << "Fuel_pres" << '\t'
-			  << std::setw(12) << "delP" << '\t'
-			  << std::setw(12) << "Po" << '\t'
-			  << std::setw(12) << "To" << '\t'
-			  << std::setw(12) << "P_rms" << '\t'
-			  << std::setw(12) << "ion_phase" << '\t'
-			  << std::setw(12) << "ion_min" << '\t'
-			  << std::setw(12) << "UHC" << '\t'
-			  << std::setw(12) << "NOx" << '\t'
-			  << std::setw(12) << "CO" << '\t'
-			  << std::setw(12) << "CO2" << '\t'
-			  << std::setw(12) << "O2" << std::endl;  
-
-	}
-
-	std::ofstream fout2("combustor_data.dat", std::ios_base::app);
-	fout2 << std::setw(12) << output.massFlowRateAir << '\t'
-		  << std::setw(12) << output.mass_flow_rate_fuel_1 << '\t'
-		  << std::setw(12) << output.equivalenceRatio << '\t'
-		  << std::setw(12) << output.combustor_frequency << '\t'
-		  << std::setw(12) << output.pressure_max << '\t'
-		  << std::setw(12) << output.pressure_min << '\t'
-		  << std::setw(12) << output.phase_max << '\t'
-		  << std::setw(12) << output.phase_min << '\t'
-		  //<< std::setw(12) << output.fuel_injection_phase << '\t'
-		  //<< std::setw(12) << output.fuel_injection_pulse_width << '\t' 
-		  << std::setw(12) << output.fuel_pressure << '\t' 
-		  << std::setw(12) << output.total_pressure << '\t' 
-		  << std::setw(12) << 1.0+(output.total_pressure/output.p_static) << '\t' 
-		  << std::setw(12) << output.total_temperature << '\t'
-		  << std::setw(12) << output.p_rms << '\t' 
-		  << std::setw(12) << output.ion_phase << '\t'
-		  << std::setw(12) << output.ion_min << '\t'
-		  << std::setw(12) << output.UHC << '\t'
-		  << std::setw(12) << output.NOx << '\t'
-		  << std::setw(12) << output.CO << '\t'
-		  << std::setw(12) << output.CO2 << '\t'
-		  << std::setw(12) << output.O2 << std::endl;
-
-
-	std::ofstream fout4(spectrumFile);
-	if(optionsMenu.mainMenu.ionProbe=="true")
-	{
-        for (int i = 0; i < output.spectrum_magnitude.size(); i++)
-            fout4 << output.spectrum_frequency[i] << '\t'
-                  << output.spectrum_magnitude[i] << '\t' 
-			      << output.ion_spectrum_frequency[i] << '\t'
-			      << output.ion_spectrum_magnitude[i] << std::endl;
-	}
-	else
-	{
-        for (int i = 0; i < output.spectrum_magnitude.size(); i++)
-            fout4 << output.spectrum_frequency[i] << '\t'
-                  << output.spectrum_magnitude[i] << std::endl;
-	}
-
-	if(optionsMenu.dataAnalysisMenu.spectrogram=="true")
-	{
-        std::ofstream fout5(spectrogramFile);
 	    if(optionsMenu.mainMenu.ionProbe=="true")
-		{
-            for (int i = 0; i < output.time.size(); i++)
-            {
-                for (int j = 0; j < output.spectrogram_n; j++)
+	    {
+			/*
+			std::cout << "Printing with ion probes: " << std::endl;
+			std::cout << "encoder: " << output.encoder_vector_smooth.size() << std::endl;
+			std::cout << "pressure: " << output.pressure_vector_smooth.size() << std::endl;
+			std::cout << "ion_vector: " << output.ion_vector_smooth.size() << std::endl;
+//			std::cout << "ballValveArea: " << output.encoder_vector_smooth.size() << std::endl;
+			std::cout << "airMassFlow: " << output.airMassFlow.size() << std::endl;
+			*/
+
+	        std::ofstream foutPrimary(mainFileOutput);
+	        for (int i = 0; i < output.encoder_vector_smooth.size(); i++)
+	        {
+		        foutPrimary << output.encoder_vector_smooth[i]    << '\t'
+		    	            << output.pressure_vector_smooth[i]   << '\t'
+		        	        << output.ion_vector_smooth[i]        << '\t'
+		        	        << ballValveArea(output.encoder_vector_smooth[i]*encoderStep,
+		        			           output.areaFunction)       << '\t'
+		    				<< output.airMassFlow[i]              << std::endl;
+	        }
+	    }
+	    else
+	    {
+	        std::ofstream foutPrimary(mainFileOutput);
+	        for (int i = 0; i < output.encoder_vector_smooth.size(); i++)
+	        {
+	            foutPrimary << output.encoder_vector_smooth[i]    << '\t'
+		                    << output.pressure_vector_smooth[i]   << '\t'
+		         	        << ballValveArea(output.encoder_vector_smooth[i]*encoderStep,
+		        			           output.areaFunction)       << '\t'
+		    				<< output.airMassFlow[i]              << std::endl;
+	        }
+	    }
+
+	    if (!file_exists("combustor_data.dat"))
+	    {
+		    std::ofstream fout3("combustor_data.dat");
+		    fout3 << std::setw(12) << "mdot_air"  << '\t'
+		    	  << std::setw(12) << "mdot_fuel" << '\t'
+		    	  << std::setw(12) << "equiv_rat" << '\t'
+		     	  << std::setw(12) << "frequency" << '\t'
+			      << std::setw(12) << "max_P"     << '\t'
+			      << std::setw(12) << "min_P"     << '\t'
+			      << std::setw(12) << "max_phase" << '\t'
+			      << std::setw(12) << "min_phase" << '\t'
+			      << std::setw(12) << "Fuel_pres" << '\t'
+			      << std::setw(12) << "delP"      << '\t'
+			      << std::setw(12) << "Po"        << '\t'
+			      << std::setw(12) << "To"        << '\t'
+		    	  << std::setw(12) << "P_rms"     << '\t'
+		    	  << std::setw(12) << "ion_phase" << '\t'
+		    	  << std::setw(12) << "ion_min"   << '\t'
+		    	  << std::setw(12) << "UHC"       << '\t'
+		    	  << std::setw(12) << "NOx"       << '\t'
+		    	  << std::setw(12) << "CO"        << '\t'
+		    	  << std::setw(12) << "CO2"       << '\t'
+	     		  << std::setw(12) << "O2"        << '\t' 
+				  << std::setw(12) << "position"  << '\t' 
+				  << std::setw(12) << "inlet_air" << std::endl;  
+
+	    }
+
+	    std::ofstream fout2("combustor_data.dat", std::ios_base::app);
+	    fout2 << std::setw(12) << output.massFlowRateAir << '\t'
+		      << std::setw(12) << output.mass_flow_rate_fuel_1 << '\t'
+		      << std::setw(12) << output.equivalenceRatio << '\t'
+		      << std::setw(12) << output.combustor_frequency << '\t'
+		      << std::setw(12) << output.pressure_max << '\t'
+		      << std::setw(12) << output.pressure_min << '\t'
+		      << std::setw(12) << output.phase_max << '\t'
+		      << std::setw(12) << output.phase_min << '\t'
+		      //<< std::setw(12) << output.fuel_injection_phase << '\t'
+		      //<< std::setw(12) << output.fuel_injection_pulse_width << '\t' 
+		      << std::setw(12) << output.fuel_pressure << '\t' 
+		      << std::setw(12) << output.total_pressure << '\t' 
+		      << std::setw(12) << 1.0+(output.total_pressure/output.p_static) << '\t' 
+		      << std::setw(12) << output.total_temperature << '\t'
+		      << std::setw(12) << output.p_rms << '\t' 
+		      << std::setw(12) << output.ion_phase << '\t'
+		      << std::setw(12) << output.ion_min << '\t'
+		      << std::setw(12) << output.UHC << '\t'
+		      << std::setw(12) << output.NOx << '\t'
+		      << std::setw(12) << output.CO  << '\t'
+		      << std::setw(12) << output.CO2 << '\t'
+		      << std::setw(12) << output.O2  << '\t' 
+			  << std::setw(12) << output.gasProbePosition << '\t'
+			  << std::setw(12) << output.airOn << std::endl;
+
+
+	    std::ofstream fout4(spectrumFile);
+	    if(optionsMenu.mainMenu.ionProbe=="true")
+	    {
+            for (int i = 0; i < output.spectrum_magnitude.size(); i++)
+                fout4 << output.spectrum_frequency[i] << '\t'
+                      << output.spectrum_magnitude[i] << '\t' 
+	     		      << output.ion_spectrum_frequency[i] << '\t'
+	    		      << output.ion_spectrum_magnitude[i] << std::endl;
+	    }
+	    else
+	    {
+            for (int i = 0; i < output.spectrum_magnitude.size(); i++)
+                fout4 << output.spectrum_frequency[i] << '\t'
+                      << output.spectrum_magnitude[i] << std::endl;
+	    }
+
+	    if(optionsMenu.dataAnalysisMenu.spectrogram=="true")
+	    {
+            std::ofstream fout5(spectrogramFile);
+	        if(optionsMenu.mainMenu.ionProbe=="true")
+		    {
+                for (int i = 0; i < output.time.size(); i++)
                 {
-                    fout5 << output.time[i] << '\t'
-                          << output.spectrogram_f[i][j] << '\t'
-                          << output.spectrogram_m[i][j] << '\t' 
-                          << output.ion_time[i] << '\t' 
-				          << output.ion_spectrogram_f[i][j] << '\t'
-				          << output.ion_spectrogram_m[i][j] << std::endl;
+                    for (int j = 0; j < output.spectrogram_n; j++)
+                    {
+                        fout5 << output.time[i] << '\t'
+                              << output.spectrogram_f[i][j] << '\t'
+                              << output.spectrogram_m[i][j] << '\t' 
+                              << output.ion_time[i] << '\t' 
+				              << output.ion_spectrogram_f[i][j] << '\t'
+				              << output.ion_spectrogram_m[i][j] << std::endl;
+                    }
+                    fout5 << std::endl;
                 }
-                fout5 << std::endl;
-            }
-		}
-		else
-		{
-            for (int i = 0; i < output.time.size(); i++)
-            {
-                for (int j = 0; j < output.spectrogram_n; j++)
+		    }
+		    else
+		    {
+                for (int i = 0; i < output.time.size(); i++)
                 {
-                    fout5 << output.time[i] << '\t'
-                          << output.spectrogram_f[i][j] << '\t'
-                          << output.spectrogram_m[i][j] << std::endl;
+                    for (int j = 0; j < output.spectrogram_n; j++)
+                    {
+                        fout5 << output.time[i] << '\t'
+                              << output.spectrogram_f[i][j] << '\t'
+                              << output.spectrogram_m[i][j] << std::endl;
+                    }
+                    fout5 << std::endl;
                 }
-                fout5 << std::endl;
-            }
-		}
+	    	}
+	    }
+
+
+    	if (!file_exists(peaksFile))
+    	{
+    	    std::ofstream fout10(peaksFile);
+     		fout10 << "tMaxP" << '\t'
+		    	   << "pMax" << '\t'
+		    	   << "tMinP" << '\t'
+		    	   << "pMin" << '\t'
+		    	   << "tMinIP" << '\t'
+		    	   << "IPmin" << std::endl;
+            for (int i = 0; i < output.p_max.size(); i++)
+		        fout10 << output.t_max_p[i] << '\t'
+		    	       << output.p_max[i]   << '\t'
+		    	       << output.t_min_p[i] << '\t'
+		    	       << output.p_min[i]   << '\t'
+	     		       << output.t_min_i[i] << '\t'
+	    		       << output.i_min[i]   << std::endl;
+	    }
+
+
+     	std::ofstream foutBode(bodeFile);
+    	for (int i = 0; i < output.bodeP.size(); i++)
+	    {
+	    	foutBode << output.bodeP[i] << '\t'
+	    		     << output.bodePprime[i] << std::endl;
+	    }
+		/*
 	}
-
-
-	if (!file_exists(peaksFile))
+	else
 	{
-	    std::ofstream fout10(peaksFile);
-		fout10 << "tMaxP" << '\t'
-			   << "pMax" << '\t'
-			   << "tMinP" << '\t'
-			   << "pMin" << '\t'
-			   << "tMinIP" << '\t'
-			   << "IPmin" << std::endl;
-	    for (int i = 0; i < output.p_max.size(); i++)
-		    fout10 << output.t_max_p[i] << '\t'
-			       << output.p_max[i]   << '\t'
-			       << output.t_min_p[i] << '\t'
-			       << output.p_min[i]   << '\t'
-			       << output.t_min_i[i] << '\t'
-			       << output.i_min[i]   << std::endl;
 	}
-
-
-
+	*/
 }
 
 void print_output_passive (output_data &output, options &optionsMenu)

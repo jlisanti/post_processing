@@ -20,14 +20,16 @@ dataConditioning {
 	
 	windowSize			0.05;
 	stepSize            0.01;
+
+	pressureOffset      -0.0;
 };
 
 dataAnalysis {
 
 	findPeaks           true;
 	averageCycle		true;
-	freqSpectrum		true;
-	spectrogram			true;
+	freqSpectrum		false;
+	spectrogram			false;
 	spectNcyclesWindow  15.0;
 	spectNcyclesSpace	0.5;
 

@@ -107,16 +107,18 @@ void read_settings_file(std::string file,
 				ss >> setting >> value;
 				boost::trim(setting);
 				boost::trim(value);
-				if(setting=="ssa")
+				if(setting=="SSA")
 					optionsMenu.dataCondMenu.SSA=value;
-				if(setting=="vectordimensionm")
+				if(setting=="vectorDimensionM")
 					optionsMenu.dataCondMenu.vectorDimensionM=atof(value.c_str());
-				if(setting=="kmax")
+				if(setting=="kMax")
 					optionsMenu.dataCondMenu.kMax=atof(value.c_str());
 				if(setting=="windowSize")
 					optionsMenu.dataCondMenu.windowSize=atof(value.c_str());
 				if(setting=="stepSize")
 					optionsMenu.dataCondMenu.stepSize=atof(value.c_str());
+				if(setting=="pressureOffset")
+					optionsMenu.dataCondMenu.pressureOffset=atof(value.c_str());
 			}
 		}
 
@@ -203,6 +205,8 @@ void read_settings_file(std::string file,
 				boost::trim(value);
 				if(setting=="printFromOpen")
 					optionsMenu.outputMenu.printFromOpen=value;
+				if(setting=="shiftCurve")
+					optionsMenu.outputMenu.shiftCurve=value;
 			}
 		}
 	}

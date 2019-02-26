@@ -4,11 +4,13 @@
 void average_cycle_active(DataFileInput &cInput,
 		                  double window,
 						  double stepSize,
+						  double pressureOffset,
 						  std::vector<double> &time_ssa,
 						  std::vector<double> &pressure_ssa,
 						  std::vector<double> &ion_ssa,
 						  int encoder_colmn,
 						  int pressur_colmn,
+						  int ion_colmn,
 						  std::vector<double> &e_vector,
 						  std::vector<double> &p_vector,
 						  std::vector<double> &i_vector,
@@ -18,6 +20,7 @@ void average_cycle_active(DataFileInput &cInput,
 						  std::vector<double> &up_cross_over,
 						  std::vector<double> &down_cross_over,
 						  std::vector<double> &areaFunction,
+						  std::string shiftCurve,
 						  std::string printFromStart);
 
 void average_cycle_passive(DataFileInput &cInput,
@@ -50,9 +53,11 @@ void average_files(std::vector<double> time_scatter,
 void average_files_active(std::vector<double> encoder_scatter,
 		                  std::vector<double> pressure_scatter,
 				          std::vector<double> ion_scatter,
+						  std::vector<double> mass_scatter,
 				          std::vector<double> &time_average,
 				          std::vector<double> &pressure_average,
 				          std::vector<double> &ion_average,
+						  std::vector<double> &mass_average,
 				          std::string ion_probe);
 
 #endif

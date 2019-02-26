@@ -5,11 +5,13 @@
 
 #include "datafileinput.h"
 
+
 DataFileInput::DataFileInput(std::string input_file, int number_rows_skip)
     : m_input_file(input_file), m_number_rows_skip(number_rows_skip)
 {
     read_input_file(input_file);
 }
+
 
 void DataFileInput::read_input_file(std::string input_file)
 {
@@ -25,8 +27,9 @@ void DataFileInput::read_input_file(std::string input_file)
     {
         std::string line;
         double buffer;
+		//std::string buffer;
         getline(input_file_stream, line);
-        std::stringstream ss(line, std::ios_base::out|std::ios_base::in|
+        std::istringstream ss(line, std::ios_base::out|std::ios_base::in|
                 std::ios_base::binary);
 
         if (!input_file_stream)
@@ -35,6 +38,7 @@ void DataFileInput::read_input_file(std::string input_file)
             continue;
 
 		std::vector<double> row;
+		//std::vector<std::string> row;
 		while (ss >> buffer)
 		{
 			if(number_rows == 0)
@@ -43,7 +47,7 @@ void DataFileInput::read_input_file(std::string input_file)
 				number_cols++;
 			}
 			else
-				row.push_back(buffer);
+				    row.push_back(buffer);
 		}
 
 		m_table.push_back(row);
@@ -54,3 +58,31 @@ void DataFileInput::read_input_file(std::string input_file)
 	m_number_rows = number_rows;
 	m_number_cols = number_cols;
 }
+
+bool DataFileInput::is_numeric(const std::string& s)
+{
+    try
+    {
+        std::stod(s);
+    }
+    catch(...)
+    {
+        return false;
+    }
+    return true;
+}
+
+/*
+bool DataFileInput::is_numeric (const std::string& str) {
+    std::istringstream ss(str);
+    double dbl;
+    ss >> dbl;      // try to read the number
+    ss >> std::ws;  // eat whitespace after number
+
+    if (!ss.fail() && ss.eof()) {
+        return true;  // is-a-number
+    } else {
+        return false; // not-a-number
+    }
+}
+*/

@@ -116,7 +116,7 @@ void find_max(std::vector<double> x_col,
 	auto it = std::max_element(std::begin(y_col), std::end(y_col));
 	int index = std::distance(std::begin(y_col), it);
 
-	int window = 6;
+	int window = 10;
 	int p = 3;
 	double chisq;
 

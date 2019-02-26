@@ -60,8 +60,11 @@ int main(int argc, char*argv[])
 			std::cout << std::endl;
 			std::cout << "Processing: " << file_names[i] << std::endl;
 			output_data output;
-			process_file(file_names[i],output,optionsMenu);
-			print_output_active(output,optionsMenu);
+			process_file(file_names[i],output,optionsMenu,cMenu);
+            if(optionsMenu.mainMenu.combustorType=="passive") 
+			    print_output_passive(output,optionsMenu);
+			else if(optionsMenu.mainMenu.combustorType=="active")
+			    print_output_active(output,optionsMenu);
 		}
 	}
 	else

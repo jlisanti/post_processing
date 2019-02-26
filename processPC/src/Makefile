@@ -25,12 +25,12 @@ CFLAGS := -Wall -DHAVE_INLINE -v -std=c++11
 SRC = main.cpp readinputfiles.cpp processfile.cpp computerms.cpp ssa.cpp \
 	  averagecycle.cpp smoothencoder.cpp fft.cpp scatterplot.cpp curvefit.cpp \
 	  findroots.cpp printoutput.cpp spectrogram.cpp trackpeaks.cpp computemassflowrate.cpp \
-	  computeballvalvearea.cpp
+	  computeballvalvearea.cpp bodeplot.cpp
 
 OBJ = main.o readinputfiles.o processfile.o computerms.o ssa.o \
 	  averagecycle.o smoothencoder.o fft.o scatterplot.o curvefit.o \
 	  findroots.o printoutput.o spectrogram.o trackpeaks.o computemassflowrate.o \
-	  computeballvalvearea.o
+	  computeballvalvearea.o bodeplot.o
 
 processPC: $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) $(LDFLAGS) -o processPC $(LDLIBS)
@@ -44,7 +44,7 @@ ssa.o: ssa.cpp
 	$(CC) $(CFLAGS) $(LDFLAGS) -c ssa.cpp -o $@ $(LDLIBS)
 computerms.o: computerms.cpp
 	$(CC) $(CFLAGS) $(LDFLAGS) -c computerms.cpp -o $@ $(LDLIBS)
-averagecycle.o: averagecycle.cpp
+averagecycle.o: averagecycle.cpp findroots.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -c averagecycle.cpp -o $@ $(LDLIBS)
 fft.o: fft.cpp
 	$(CC) $(CFLAGS) $(LDFLAGS) -c fft.cpp -o $@ $(LDLIBS)
@@ -66,6 +66,8 @@ computemassflowrate.o: computemassflowrate.cpp
 	$(CC) $(CFLAGS) $(LDFLAGS) -c computemassflowrate.cpp -o $@ $(LDLIBS)
 computeballvalvearea.o: computeballvalvearea.cpp 
 	$(CC) $(CFLAGS) $(LDFLAGS) -c computeballvalvearea.cpp -o $@ $(LDLIBS)
+bodeplot.o: bodeplot.cpp 
+	$(CC) $(CFLAGS) $(LDFLAGS) -c bodeplot.cpp -o $@ $(LDLIBS)
 
 .PHONY: clean
 clean:
