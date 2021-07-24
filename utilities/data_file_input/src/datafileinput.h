@@ -66,6 +66,11 @@ public:
 	int number_cols() const {return m_number_cols; }
 	int cols()        const {return m_number_cols; }
 	int number_columns() const { return m_number_cols; }
+    void delete_row(int i) 
+    { 
+		m_table[i].erase(m_table[i].begin(),m_table[i].begin() + m_number_cols); 
+        m_number_rows--;
+    }
 	void clear() {
 		for (int i = 0; i < m_number_rows; i++)
 			m_table[i].clear();

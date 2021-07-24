@@ -35,16 +35,21 @@ int round_value(int number, int multiple)
 
 void print_output_active (output_data &output, options &optionsMenu)
 {
-	/*
-	if()
-	{
-	*/
+
     	std::cout << " Printing output" << std::endl;
     	std::string mainFileOutput;
 	    std::string fileFront;
 
      	double encoderStep = M_PI/2.5;
+		
+	    std::cout << " Checking if pressure vector = air mass flow vector" << std::endl;
+		if(output.airMassFlow.size()!=output.pressure_vector_smooth.size())
+		{
+			std::vector<double> tmpInit (output.pressure_vector_smooth.size(), 0.0);
+			output.airMassFlow = tmpInit;
+		}
 
+		std::cout << " Setting output file names..." << std::endl;
     	// Round combustor frequency
     	output.combustor_frequency = round_value(output.combustor_frequency,5);
 	    std::ostringstream frequency;
@@ -81,10 +86,11 @@ void print_output_active (output_data &output, options &optionsMenu)
 		
 		if(optionsMenu.mainMenu.fuelType=="liquid")
 		{
+			std::cout << " Output type = liquid fuel - adjusting file name" << std::endl;
      	    std::ostringstream totalTemperature;
 			totalTemperature << output.total_temperature;
-	        fileFront = frequency.str() + "Hz_" + totalTemperature.str() + "C_" 
-				+ optionsMenu.mainMenu.fuelA + "_" + airMassFlow.str() + "gps_air";
+	        fileFront = frequency.str() + "Hz_" 
+		    	+ optionsMenu.mainMenu.fuelA + "_" + airMassFlow.str() + "gps_air";
 		}
 
 	    mainFileOutput = fileFront + "_output.dat";
@@ -92,6 +98,7 @@ void print_output_active (output_data &output, options &optionsMenu)
         std::string averagedFile    = fileFront + "_scatter.dat";
         std::string averagedCurve   = fileFront + "_averaged.dat";
 
+		std::cout << " Checking for duplicate cases and averaging if necessary..." << std::endl;
      	/* check for duplicate cases and average */
     	bool end = false;
     	std::string fileNameNext = "none";
@@ -315,6 +322,9 @@ void print_output_active (output_data &output, options &optionsMenu)
 		    }
 	    }
 
+		std::cout << " Finished averaging duplicate files" << std::endl;
+		std::cout << " Defining associated file names" << std::endl;
+
         std::string spectrumFile    = fileFront + "_spectrum.dat";
         std::string spectrogramFile = fileFront + "_spectrogram.dat";
 
@@ -325,15 +335,10 @@ void print_output_active (output_data &output, options &optionsMenu)
 
 	    std::string bodeFile        = fileFront + "_bode.dat";
 
-	    std::cout << "Bode ************** " << '\n'
-	    	<< "fileNameIndex: " << fileNameIndex << std::endl;
-
 	    if(fileNameIndex != 0)
 	    {
 		    std::stringstream intTostring;
 		    intTostring << fileNameIndex;
-		    std::cout << "inside************" << std::endl;
-		    std::cout << fileNameIndex << '\t' << intTostring.str() << std::endl;
             spectrumFile    = fileFront + "_spectrum_" + intTostring.str() + ".dat";
             spectrogramFile = fileFront + "_spectrogram_" + intTostring.str() + ".dat";
 
@@ -345,7 +350,12 @@ void print_output_active (output_data &output, options &optionsMenu)
 	        bodeFile        = fileFront + "_bode_" + intTostring.str() + ".dat";
 	    }
 
-	    if(optionsMenu.mainMenu.ionProbe=="true")
+		std::cout << std::endl;
+		std::cout << " Printing primary output file" << std::endl;
+		std::cout << "ion probe = " << optionsMenu.mainMenu.ionProbe << '\n'
+                  << "average cycle = " << optionsMenu.dataAnalysisMenu.averageCycle << std::endl;
+	    if((optionsMenu.mainMenu.ionProbe=="true") && 
+            (optionsMenu.dataAnalysisMenu.averageCycle=="true"))
 	    {
 			/*
 			std::cout << "Printing with ion probes: " << std::endl;
@@ -367,7 +377,7 @@ void print_output_active (output_data &output, options &optionsMenu)
 		    				<< output.airMassFlow[i]              << std::endl;
 	        }
 	    }
-	    else
+	    else if(optionsMenu.dataAnalysisMenu.averageCycle=="true")
 	    {
 	        std::ofstream foutPrimary(mainFileOutput);
 	        for (int i = 0; i < output.encoder_vector_smooth.size(); i++)
@@ -404,7 +414,8 @@ void print_output_active (output_data &output, options &optionsMenu)
 		    	  << std::setw(12) << "CO2"       << '\t'
 	     		  << std::setw(12) << "O2"        << '\t' 
 				  << std::setw(12) << "position"  << '\t' 
-				  << std::setw(12) << "inlet_air" << std::endl;  
+				  << std::setw(12) << "inlet_air" << '\t' 
+                  << std::setw(12) << "Liquid"    << std::endl;  
 
 	    }
 
@@ -432,24 +443,55 @@ void print_output_active (output_data &output, options &optionsMenu)
 		      << std::setw(12) << output.CO2 << '\t'
 		      << std::setw(12) << output.O2  << '\t' 
 			  << std::setw(12) << output.gasProbePosition << '\t'
-			  << std::setw(12) << output.airOn << std::endl;
+			  << std::setw(12) << output.airOn << '\t'
+			  << std::setw(12) << output.liquidFuelMassFlowRate << std::endl;
 
-
-	    std::ofstream fout4(spectrumFile);
-	    if(optionsMenu.mainMenu.ionProbe=="true")
-	    {
-            for (int i = 0; i < output.spectrum_magnitude.size(); i++)
-                fout4 << output.spectrum_frequency[i] << '\t'
-                      << output.spectrum_magnitude[i] << '\t' 
-	     		      << output.ion_spectrum_frequency[i] << '\t'
-	    		      << output.ion_spectrum_magnitude[i] << std::endl;
+		std::cout << "printing scatter file curve" << std::endl;
+		std::ofstream fout_scat(scatterFile);
+	    if((optionsMenu.mainMenu.ionProbe=="true") && 
+           (optionsMenu.dataAnalysisMenu.averageCycle=="true"))
+		{
+		    for (int i = 0; i < output.pressure_scatter.size(); i++)
+			{
+			    fout_scat << output.encoder_scatter[i] << '\t'
+						  << output.pressure_scatter[i] << '\t'
+						  << output.ion_scatter[i] << '\t'
+		         	      << ballValveArea(output.encoder_scatter[i]*encoderStep,
+		        			           output.areaFunction)       << '\t'
+			              << std::endl;
+		    }
 	    }
-	    else
-	    {
-            for (int i = 0; i < output.spectrum_magnitude.size(); i++)
-                fout4 << output.spectrum_frequency[i] << '\t'
+		else if(optionsMenu.dataAnalysisMenu.averageCycle=="true")
+		{
+		    for (int i = 0; i < output.pressure_scatter.size(); i++)
+		    {
+			    fout_scat << output.encoder_scatter[i] << '\t'
+						  << output.pressure_scatter[i] << '\t'
+		         	      << ballValveArea(output.encoder_scatter[i]*encoderStep,
+		        			           output.areaFunction)       << '\t'
+			              << std::endl;
+			}
+		}
+
+
+		if(optionsMenu.dataAnalysisMenu.freqSpectrum=="true")
+		{
+			std::ofstream fout4(spectrumFile);
+			if(optionsMenu.mainMenu.ionProbe=="true")
+			{
+				for (int i = 0; i < output.spectrum_magnitude.size(); i++)
+					fout4 << output.spectrum_frequency[i] << '\t'
+						<< output.spectrum_magnitude[i] << '\t' 
+						<< output.ion_spectrum_frequency[i] << '\t'
+						<< output.ion_spectrum_magnitude[i] << std::endl;
+			}
+			else
+			{
+				for (int i = 0; i < output.spectrum_magnitude.size(); i++)
+					fout4 << output.spectrum_frequency[i] << '\t'
                       << output.spectrum_magnitude[i] << std::endl;
-	    }
+			}
+		}
 
 	    if(optionsMenu.dataAnalysisMenu.spectrogram=="true")
 	    {
@@ -486,7 +528,8 @@ void print_output_active (output_data &output, options &optionsMenu)
 	    }
 
 
-    	if (!file_exists(peaksFile))
+    	if ((!file_exists(peaksFile)) && 
+              (optionsMenu.dataAnalysisMenu.findPeaks=="true"))
     	{
     	    std::ofstream fout10(peaksFile);
      		fout10 << "tMaxP" << '\t'
@@ -505,12 +548,15 @@ void print_output_active (output_data &output, options &optionsMenu)
 	    }
 
 
+	if(optionsMenu.dataAnalysisMenu.bodePlots=="true")
+    {
      	std::ofstream foutBode(bodeFile);
     	for (int i = 0; i < output.bodeP.size(); i++)
 	    {
 	    	foutBode << output.bodeP[i] << '\t'
 	    		     << output.bodePprime[i] << std::endl;
 	    }
+    }
 		/*
 	}
 	else

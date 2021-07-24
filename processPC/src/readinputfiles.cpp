@@ -119,6 +119,12 @@ void read_settings_file(std::string file,
 					optionsMenu.dataCondMenu.stepSize=atof(value.c_str());
 				if(setting=="pressureOffset")
 					optionsMenu.dataCondMenu.pressureOffset=atof(value.c_str());
+				if(setting=="shiftCurve")
+					optionsMenu.dataCondMenu.shiftCurve=value;
+				if(setting=="shiftFixedCurve")
+					optionsMenu.dataCondMenu.shiftFixedCurve=value;
+				if(setting=="shiftFixed")
+					optionsMenu.dataCondMenu.shiftFixed=atof(value.c_str());
 			}
 		}
 
@@ -185,6 +191,10 @@ void read_settings_file(std::string file,
 					optionsMenu.dataAnalysisMenu.gasConstant=atof(value.c_str());
 				if(setting=="inletLength")
 					optionsMenu.dataAnalysisMenu.inletLength=atof(value.c_str());
+				if(setting=="setMeanP")
+					optionsMenu.dataAnalysisMenu.setMeanP=value;
+				if(setting=="meanP")
+					optionsMenu.dataAnalysisMenu.meanP=atof(value.c_str());
 			}
 		}
 

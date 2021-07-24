@@ -12,8 +12,9 @@ endif
 
 LDFLAGS := -L/usr/local/lib \
            -I/usr/local/include \
-           -I/Users/jlisanti/Documents/program_sources/boost_1_67_0 \
-		   -I/Users/mohammadqatomah/boost_1_67_0 \
+           -I/Users/Joel/Documents/programSourceFiles/boost_1_72_0 \
+           -I/Users/joellisanti/Documents/programSourceFiles/boost_1_72_0 \
+		   -I/Users/mohammadqatomah/boost_1_72_0 \
 		   -L/opt/local/lib \
            -I/opt/local/include \
 
@@ -25,12 +26,12 @@ CFLAGS := -Wall -DHAVE_INLINE -v -std=c++11
 SRC = main.cpp readinputfiles.cpp processfile.cpp computerms.cpp ssa.cpp \
 	  averagecycle.cpp smoothencoder.cpp fft.cpp scatterplot.cpp curvefit.cpp \
 	  findroots.cpp printoutput.cpp spectrogram.cpp trackpeaks.cpp computemassflowrate.cpp \
-	  computeballvalvearea.cpp bodeplot.cpp
+	  computeballvalvearea.cpp bodeplot.cpp computeliquidfuelflowrate.cpp
 
 OBJ = main.o readinputfiles.o processfile.o computerms.o ssa.o \
 	  averagecycle.o smoothencoder.o fft.o scatterplot.o curvefit.o \
 	  findroots.o printoutput.o spectrogram.o trackpeaks.o computemassflowrate.o \
-	  computeballvalvearea.o bodeplot.o
+	  computeballvalvearea.o bodeplot.o computeliquidfuelflowrate.o
 
 processPC: $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) $(LDFLAGS) -o processPC $(LDLIBS)
@@ -50,7 +51,7 @@ fft.o: fft.cpp
 	$(CC) $(CFLAGS) $(LDFLAGS) -c fft.cpp -o $@ $(LDLIBS)
 scatterplot.o: scatterplot.cpp
 	$(CC) $(CFLAGS) $(LDFLAGS) -c scatterplot.cpp -o $@ $(LDLIBS)
-smoothencoder.o: smoothencoder.cpp
+smoothencoder.o: smoothencoder.cpp ssa.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -c smoothencoder.cpp -o $@ $(LDLIBS)
 curvefit.o: curvefit.cpp
 	$(CC) $(CFLAGS) $(LDFLAGS) -c curvefit.cpp -o $@ $(LDLIBS)
@@ -68,6 +69,8 @@ computeballvalvearea.o: computeballvalvearea.cpp
 	$(CC) $(CFLAGS) $(LDFLAGS) -c computeballvalvearea.cpp -o $@ $(LDLIBS)
 bodeplot.o: bodeplot.cpp 
 	$(CC) $(CFLAGS) $(LDFLAGS) -c bodeplot.cpp -o $@ $(LDLIBS)
+computeliquidfuelflowrate.o: computeliquidfuelflowrate.cpp 
+	$(CC) $(CFLAGS) $(LDFLAGS) -c computeliquidfuelflowrate.cpp -o $@ $(LDLIBS)
 
 .PHONY: clean
 clean:

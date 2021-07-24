@@ -3,20 +3,23 @@
 #include <vector>
 #include <string>
 #include <cmath>
+#include <sys/stat.h>
 
 #include "datafileinput.h"
 #include "smoothencoder.h"
 #include "averagecycle.h"
 #include "findroots.h"
 
-//		std::vector<double> encoder_average;
-//		std::vector<double> pressure_average;
-//		std::vector<double> ion_probe_average;
+inline bool file_exists (const std::string& name) {
+  struct stat buffer;   
+  return (stat (name.c_str(), &buffer) == 0); 
+}
 
 void average_cycle_active(DataFileInput &cInput, 
 		                  double window,
 						  double step,
 						  double pressureOffset,
+						  double meanPshift,
 						  std::vector<double> &time_ssa,
 						  std::vector<double> &pressure_ssa,
 						  std::vector<double> &ion_ssa,
@@ -33,15 +36,24 @@ void average_cycle_active(DataFileInput &cInput,
 						  std::vector<double> &down_cross_over,
 						  std::vector<double> &areaFunction,
 						  std::string shiftCurve,
+						  std::string shiftFixedCurve,
+						  double shiftFixed,
 						  std::string printFromStart)
 {
+
 	std::cout << "Average active valve data" << std::endl;
 	std::cout << "encoder colmn: " << encoder_colmn << std::endl;
+    std::cout << "pressure colmn: " << pressur_colmn << std::endl;
+	std::cout << "ion_comn " << ion_colmn << std::endl;
+	std::cout << "averaged encoder" << std::endl;
+
 	std::vector<double> encoder_vec = smooth_encoder(cInput,
 			                                         encoder_colmn);
 
-	std::cout << "ion_comn " << ion_colmn << std::endl;
-	std::cout << "averaged encoder" << std::endl;
+	std::cout << "finished averaging encoder" << std::endl;
+
+
+
 	int steps = ceil(2.5/window);
 	int lines = cInput.file_length(); 
 
@@ -50,7 +62,7 @@ void average_cycle_active(DataFileInput &cInput,
 
 	if(printFromStart=="true")
 	{
-		std::cout << "printing from start" << std::endl;
+		std::cout << "Printing from start of valve opening" << std::endl;
 
 		int openIndex = 0;
 		int closeIndex = 0;
@@ -76,6 +88,292 @@ void average_cycle_active(DataFileInput &cInput,
 		areaFunction.clear();
 		areaFunction = tmp;
 		tmp.clear();
+
+
+		std::vector<double> encoder_clean;
+
+		for (int i = 0; i < encoder_vec.size(); i++)
+		{
+		    if(encoder_vec[i] > 2.5)
+			    encoder_vec[i] = encoder_vec[i] - 2.5;
+			if(encoder_vec[i] < 0.0)
+				encoder_vec[i] = 0.0;
+		}
+
+		std::cout << "encoder_open: " << encoder_open << std::endl;
+		std::cout << "encoder_close: " << encoder_close << std::endl;
+
+		/* loop through encoder file */
+		for (int i = 4; i < encoder_vec.size()-4; i++)
+		{
+			/* check for cross opening value */
+/*
+			if((encoder_vec[i]   <= encoder_open) &&
+			   (encoder_vec[i-1] < encoder_open)  &&
+			   (encoder_vec[i+1] > encoder_open))
+				down_cross_over.push_back(i);
+			if((encoder_vec[i]   <= encoder_close) &&
+			   (encoder_vec[i-1] < encoder_close)  &&
+			   (encoder_vec[i+1] > encoder_close))
+				up_cross_over.push_back(i);
+*/
+			if((encoder_vec[i]   <= encoder_open) &&
+			   (encoder_vec[i-1] < encoder_open)  &&
+			   (encoder_vec[i-2] < encoder_open)  &&
+			   (encoder_vec[i-3] < encoder_open)  && 
+			   (encoder_vec[i-4] < encoder_open)  &&
+			   (encoder_vec[i+1] > encoder_open)  &&
+			   (encoder_vec[i+2] > encoder_open)  &&
+			   (encoder_vec[i+3] > encoder_open)  &&
+			   (encoder_vec[i+4] > encoder_open))
+				down_cross_over.push_back(i);
+			if((encoder_vec[i]   <= encoder_close) &&
+			   (encoder_vec[i-1] < encoder_close)  &&
+			   (encoder_vec[i-2] < encoder_close)  &&
+			   (encoder_vec[i-3] < encoder_close)  &&
+			   (encoder_vec[i-4] < encoder_close)  &&
+			   (encoder_vec[i+1] > encoder_close)  &&
+			   (encoder_vec[i+2] > encoder_close)  &&
+			   (encoder_vec[i+3] > encoder_close)  &&
+			   (encoder_vec[i+4] > encoder_close))
+				up_cross_over.push_back(i);
+			
+		}
+
+		std::vector<double> time_scatter;
+		std::vector<double> phase_scatter;
+
+	    std::vector<double> cycle_time;
+
+	    int size = up_cross_over.size()-1;
+
+	    if(printFromStart=="true")
+		    size = down_cross_over.size()-1;
+   
+        // start from first up crossing 
+        for (int i = 0; i < size; i++)
+        {
+
+	        int strtIndx = up_cross_over[i];
+	        int endIndx   = up_cross_over[i+1];
+
+		    if(printFromStart=="true")
+		    {
+			    strtIndx = down_cross_over[i];
+			    endIndx   = down_cross_over[i+1];
+			    size = down_cross_over.size()-1;
+		    }
+
+            for (int j = strtIndx; j < endIndx; j++)
+            {
+                // time mapping
+                double dt = cInput.table_value(endIndx,0)
+                            - cInput.table_value(strtIndx,0);
+                double t_initial = cInput.table_value(strtIndx,0);
+                double posPhase = (cInput.table_value(j,0)
+                                   * (1.0/dt)) - (t_initial/dt);
+			    double posTime = cInput.table_value(j,0)
+				                 - cInput.table_value(strtIndx,0);
+                encoder_scatter.push_back(encoder_vec[j]);
+				phase_scatter.push_back(posPhase);
+			    time_scatter.push_back(posTime);
+                pressure_scatter.push_back(cInput.table_value(j,1));
+                ion_scatter.push_back(cInput.table_value(j,ion_colmn));
+            }
+        }
+
+		for (int i = 0; i < encoder_scatter.size(); i++)
+		{
+			if(encoder_scatter[i] < encoder_close)
+			{
+				encoder_scatter[i] = 2.5 + encoder_scatter[i];
+			}
+			encoder_scatter[i] = encoder_scatter[i] - encoder_close;
+		}
+		
+        // Average cycles into single curve
+	    int steps = ceil(2.5/step);
+
+
+        double time_step_min = 0.0;
+        double time_step_max = step + window;
+	    double time_step = 0.0;
+
+        double encoder_step_min = 0.0;
+        double encoder_step_max = step + window;
+	    double encoder_step = 0.0;
+
+
+		std::cout << "Number of steps: " << steps << std::endl;
+
+        for (int i = 0; i < steps; i++)
+        {
+            double countStep = 0;
+            double press_time_sum = 0;
+            double encoder_sum = 0;
+            double ion_time_sum = 0;
+
+            for (int j = 0; j < time_scatter.size(); j++)
+            {
+                if((encoder_scatter[j] > encoder_step_min) && (encoder_scatter[j] < encoder_step_max))
+                {
+                    press_time_sum = press_time_sum + pressure_scatter[j];
+                    encoder_sum = encoder_sum + encoder_scatter[j];
+                    ion_time_sum   = ion_time_sum   + ion_scatter[j];
+                    countStep++;
+                }
+            }
+
+		    if(countStep != 0)
+		    {
+			    encoder_average.push_back(encoder_sum/double(countStep));
+			    pressure_average.push_back(press_time_sum/double(countStep));
+			    ion_average.push_back(ion_time_sum/double(countStep));
+		    }
+		    encoder_step = encoder_step + step;
+            encoder_step_min = encoder_step - window;
+            encoder_step_max = encoder_step + window;
+        }
+		std::cout << "encoder average: " <<
+			encoder_average.size() << std::endl;
+		encoder_average[0] = 0.0;
+		/* compute shift to aline pressure min */
+		/* find pressure min */
+		/*
+		int minPresIndx = -1;
+		for (int i = 0; i < pressure_average.size(); i++)
+		{
+			double minTmp = 1.0e+10;
+			if(pressure_average[i] < minTmp)
+			{
+				minTmp = pressure_average[i];
+				minPresIndx = i;
+			}
+		}
+		double shift = encoder_average[minPresIndx] - pressureOffset;
+		*/
+
+		double Pmin = 0.0;
+		double PminPhase = 0.0;
+		std::cout << "about to search for min" << std::endl;
+		find_min(encoder_average,
+				 pressure_average,
+				 Pmin,
+				 PminPhase);
+
+		std::cout << "found min" << std::endl;
+
+
+
+		double shiftOffset = 0.0;
+
+		if(file_exists("initialShift"))
+		{
+            std::ifstream finShift("initialShift");
+			std::string line;
+			std::getline (finShift, line);
+			shiftOffset = atof(line.c_str())-PminPhase;
+
+		}
+		else
+		{
+            std::ofstream foutShift("initialShift");
+			foutShift << PminPhase << std::endl;
+		}
+
+		double shift = (pressureOffset - PminPhase)*1.0;
+
+		shift = shift + shiftOffset;
+
+		if(shiftCurve=="false")
+			shift = 0.0;
+		if(shiftFixedCurve=="false")
+			shiftFixed = 0.0;
+		std::cout << std::endl;
+		std::cout << "****finding min offset****" << std::endl;
+		std::cout << "    pMinPhase = " << PminPhase << std::endl;
+		std::cout << "    pOffset   = " << pressureOffset << std::endl;
+		std::cout << "    shift     = " << shift << std::endl;
+		/* shift for pressure offset */
+		for (int i = 0; i < encoder_average.size(); i++)
+		{
+			//double encoder_tmp = encoder_average[i] - pressureOffset;
+			double encoder_tmp = encoder_average[i] + shift + shiftFixed;
+			if(encoder_tmp < 0.0)
+				encoder_tmp = 2.5 + encoder_tmp;
+			else if(encoder_tmp > 2.5)
+				encoder_tmp = encoder_tmp - 2.5;
+			encoder_average[i] = encoder_tmp;
+		}
+		std::vector<double> encoderTmp;
+		std::vector<double> pressureTmp;
+		std::vector<double> ionTmp;
+
+		while (encoderTmp.size() < encoder_average.size())
+		{
+			double max = -1.0;
+			double min = 10.0e+10;
+			int arrangeIndex = 0;
+			/*
+
+			for (int i = 0; i < encoderTmp.size(); i++)
+			{
+				if(encoderTmp[i] > max) 
+					max = encoderTmp[i];
+			}
+			*/
+			if(encoderTmp.size() != 0)
+				max = encoderTmp[encoderTmp.size()-1];
+		    for (int i = 0; i < encoder_average.size(); i++)
+		    {
+			    if((encoder_average[i] < min) && (encoder_average[i] > max)) 
+				{
+					min = encoder_average[i]; 
+					arrangeIndex = i;
+				}
+		    }
+			encoderTmp.push_back(encoder_average[arrangeIndex]);
+			pressureTmp.push_back(pressure_average[arrangeIndex]-meanPshift);
+			ionTmp.push_back(ion_average[arrangeIndex]);
+		}
+
+		encoder_average.clear();
+		encoder_average = encoderTmp;
+
+		pressure_average.clear();
+		pressure_average = pressureTmp;
+
+		ion_average.clear();
+		ion_average = ionTmp;
+	}
+	else
+	{
+		int openIndex = 0;
+		int closeIndex = 0;
+		for (int i = 1; i < areaFunction.size()-1; i++)
+		{
+			if((areaFunction[i]==0.0) && (areaFunction[i-1]!=0.0))
+				closeIndex = i;
+			if((areaFunction[i]==0.0) && (areaFunction[i+1]!=0.0))
+				openIndex = i;
+		}
+
+		double encoderStep = 2.5/double(areaFunction.size());
+		double encoder_open = double(openIndex)*encoderStep;
+		double encoder_close = double(closeIndex)*encoderStep;
+
+		/* re-order area function */
+		/*
+		std::vector<double> tmp;
+		for (int i = openIndex; i < areaFunction.size(); i++)
+			tmp.push_back(areaFunction[i]);
+		for (int i = 0; i < openIndex; i++)
+			tmp.push_back(areaFunction[i]);
+
+		areaFunction.clear();
+		areaFunction = tmp;
+		tmp.clear();
+		*/
 
 
 		std::vector<double> encoder_clean;
@@ -241,7 +539,7 @@ void average_cycle_active(DataFileInput &cInput,
 
 		std::cout << "found min" << std::endl;
 
-		double shift = pressureOffset - PminPhase;
+		double shift = (pressureOffset - PminPhase)*0.5;
 		if(shiftCurve=="false")
 			shift = 0.0;
 		std::cout << std::endl;
@@ -288,7 +586,7 @@ void average_cycle_active(DataFileInput &cInput,
 				}
 		    }
 			encoderTmp.push_back(encoder_average[arrangeIndex]);
-			pressureTmp.push_back(pressure_average[arrangeIndex]);
+			pressureTmp.push_back(pressure_average[arrangeIndex]-meanPshift);
 			ionTmp.push_back(ion_average[arrangeIndex]);
 		}
 

@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cctype>
 #include <locale>
+#include <vector>
 
 #include <gsl/gsl_statistics.h>
 
@@ -29,6 +30,7 @@
 #include "computemassflowrate.h"
 #include "computeballvalvearea.h"
 #include "bodeplot.h"
+#include "computeliquidfuelflowrate.h"
 
 
 void process_file(std::string file, output_data &output, options &optionsMenu, Menu &cMenu)
@@ -221,7 +223,29 @@ void process_file(std::string file, output_data &output, options &optionsMenu, M
 				                     1000,
 									 output.areaFunction);
 
+
+	    std::ofstream fout1("area_function.dat");
+        for (int i = 0; i < 1000; i++)
+        {
+		fout1 << i << '\t'
+			  << ballValveArea((M_PI/1000.0)*i,output.areaFunction) << std::endl;
+        }
+
 		output.ion_probe_colmn = 2;
+		
+		std::cout << "file length before: " << cInput.file_length() << std::endl;
+
+		int tmpIter = cInput.file_length();
+
+        /* Clear bad data */
+		for (int i = 0; i < tmpIter; i++)
+		{
+			if((cInput.table_value(i,output.pressure_colmn)==0) || 
+               (cInput.table_value(i,output.encoder_colmn)==0))
+				cInput.delete_row(i);
+		}
+
+		std::cout << "file length after: " << cInput.file_length() << std::endl;
 
 		/*
 		for (int i = 0; i < output.areaFunction.size(); i++)
@@ -235,6 +259,13 @@ void process_file(std::string file, output_data &output, options &optionsMenu, M
 		     cMenu.display_message("Computing pressure RMS");
 		     output.p_rms = compute_prms(cInput,output.p_static);
 		}
+/*
+		if(optionsMenu.dataAnalysisMenu.setMeanP=="true")
+		{
+		     cMenu.display_message("Computing pressure RMS");
+		     output.p_rms = compute_prms(cInput,output.p_static);
+		}
+*/
 
 		double tmp = 0.0;
 
@@ -264,12 +295,19 @@ void process_file(std::string file, output_data &output, options &optionsMenu, M
 		std::vector<double> tmp2 = cInput.table_column(output.pressure_colmn);
 		std::vector<double> tmp3 = cInput.table_column(output.ion_probe_colmn);
 
+        double meanP = compute_pmean(cInput,output.p_static);
+        double meanPshift = meanP-optionsMenu.dataAnalysisMenu.meanP;
 
-        cMenu.display_message("Averaging cycle...");
-		average_cycle_active(cInput,
+		meanPshift = 0.0;
+
+        if(optionsMenu.dataAnalysisMenu.averageCycle=="true")
+		{
+			cMenu.display_message("Averaging cycle...");
+			average_cycle_active(cInput,
 							  optionsMenu.dataCondMenu.windowSize,
 							  optionsMenu.dataCondMenu.stepSize,
 							  optionsMenu.dataCondMenu.pressureOffset,
+							  meanPshift,
 							  tmp1,
 							  tmp2,
 							  tmp3,
@@ -285,8 +323,17 @@ void process_file(std::string file, output_data &output, options &optionsMenu, M
 							  output.upCrossOver,
 							  output.downCrossOver,
 							  output.areaFunction,
-							  optionsMenu.outputMenu.shiftCurve,
+							  optionsMenu.dataCondMenu.shiftCurve,
+							  optionsMenu.dataCondMenu.shiftFixedCurve,
+							  optionsMenu.dataCondMenu.shiftFixed,
 							  optionsMenu.outputMenu.printFromOpen);
+		}
+		else
+        {
+			output.encoder_vector_smooth.assign(250,0.0);
+            output.pressure_vector_smooth.assign(250,0.0);
+            output.airMassFlow.assign(250,0.0);
+        }
 		/*
 
 		for (int i =0; i < output.ion_vector_smooth.size(); i++)
@@ -311,12 +358,20 @@ void process_file(std::string file, output_data &output, options &optionsMenu, M
 		    if(optionsMenu.mainMenu.ionProbe=="true")
 		    {
 		        cMenu.display_message("Finding ion probe peaks");
-			    find_min(output.time_vector_smooth,
+			    find_min(output.encoder_vector_smooth,
 					     output.ion_vector_smooth,
 					     output.ion_min,
 					     output.ion_phase);
 		    }
 		}
+
+		cMenu.display_message("Finished finding peaks");
+
+/*
+        output.liquidFuelMassFlowRate = computeLiquidFuelFlowRate( output.combustor_frequency,
+                                                                   output.fuel_pressure,
+                                                                   output.pressure_vector_smooth);
+*/
 
 		if(optionsMenu.dataAnalysisMenu.spectrogram=="true")
 		{
@@ -586,7 +641,7 @@ void read_header_file_data(std::string file, output_data &output, int &skip_line
 			std::string tmp = line.substr(position+2);
 			output.static_pressure = std::stod(tmp);
 		}
-		else if (strncmp(line.c_str(),"Total pressure:",14)==0)
+		else if (strncmp(line.c_str(),"Total pressure:",15)==0)
 		{
 			size_t position = line.find(":");
 			std::string tmp = line.substr(position+2);
@@ -669,9 +724,17 @@ void read_header_file_data(std::string file, output_data &output, int &skip_line
 				 (strncmp(line.c_str(),
 				 "Time [s]        Pressure [bar]  Position [volts]",45)==0) ||
 				 (strncmp(line.c_str(),
-				 "Time [s]        Pressure [bar]  Ion Probe [volts])",45)==0))
+				 "Time [s]        Pressure [bar]  Ion Probe [volts]",45)==0 ||
+				 (strncmp(line.c_str(),
+				 "Time [s]        Pressure [bar]  Position [volts]",45)==0)))
 		{
 
+			if ((strncmp(line.c_str(),
+					"Time [s]        Pressure [bar]  Ion Probe [volts] encoder [volts]",56)==0))
+			{
+				encoder_colmn = 4;
+				output.pressure_colmn = 1;
+			}
 			if ((strncmp(line.c_str(),
 					"Time [s]            Pressure [bar]      Injector [volts]",56)==0))
 			{
@@ -690,10 +753,11 @@ void read_header_file_data(std::string file, output_data &output, int &skip_line
 				encoder_colmn = 4;
                 output.pressure_colmn = 1;
 			}
-			else
+			if ((strncmp(line.c_str(),
+			"Time [s]        Pressure [bar]  Position [volts]",40)==0))
 			{
-				encoder_colmn = 2;
-				output.pressure_colmn = 3;
+				encoder_colmn = 3;
+                output.pressure_colmn = 1;
 			}
 			if ((strncmp(line.c_str(), "Time [s]                Pressure [bar]          Position [volts]",
 							60)==0))
@@ -701,6 +765,13 @@ void read_header_file_data(std::string file, output_data &output, int &skip_line
 				encoder_colmn = 3;
 				output.pressure_colmn = 1;
 			}
+/*
+			else
+			{
+				encoder_colmn = 2;
+				output.pressure_colmn = 3;
+			}
+*/
 			output.encoder_colmn = encoder_colmn-1;
 			exit_loop = true;
 		}

@@ -28,6 +28,9 @@ struct data_conditioning_menu {
 	double windowSize;
 	double stepSize;
 	double pressureOffset;
+	std::string shiftCurve;
+	std::string shiftFixedCurve;
+	double shiftFixed;
 };
 
 struct data_analysis_menu {
@@ -52,6 +55,8 @@ struct data_analysis_menu {
 	double ballInternalRadius;
 	double lengthBall;
 	double staticPressure;
+	std::string setMeanP;
+	double meanP;
 };
 
 struct output_menu {

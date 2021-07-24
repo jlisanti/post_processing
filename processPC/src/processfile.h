@@ -103,6 +103,7 @@ typedef struct {
 	std::vector<double> bodePprime;
 	double gasProbePosition;
 	double airOn;
+    double liquidFuelMassFlowRate;
 } output_data;
 
 void process_file(std::string file, output_data &output, options &optionsMenu, Menu &cMenu);

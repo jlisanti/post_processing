@@ -8,105 +8,9 @@
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_multifit.h>
+#include <gsl/gsl_statistics.h>
 
 #include "findroots.h"
-
-/*
-
-void find_max(std::vector<double> coefficients, double &max, double &phase_max,
-		                                        double &min, double &phase_min)
-{
-	int n = coefficients.size()-1;
-	double *a = new double[n];
-	double *z = new double[(n-1)*2];
-
-	max = 0.0;
-	min = 0.0;
-	phase_max = 0.0;
-	phase_min = 0.0;
-
-	std::cout << "Finding roots..." << std::endl;
-	std::cout << "Number coefficients " << n << std::endl;
-
-	for (int i = 1; i < n+1; i++)
-	{
-		a[i-1] = double(i)*coefficients[i];
-	}
-
-	//for (int i = 0; i < n-1; i++)
-//		std::cout << i  << '\t' << coefficients[i] << std::endl;
-
-	gsl_poly_complex_workspace * w 
-		= gsl_poly_complex_workspace_alloc (n);
-	gsl_poly_complex_solve (a, n, w, z);
-	gsl_poly_complex_workspace_free (w);
-
-	for (int i = 0; i < n-1; i++)
-    {
-		if(z[2*i+1] == 0.0)
-		{
-			if((z[2*i] < 2.5) && (z[2*i] > 0.0))
-			{
-				double func = 0.0;
-				double t = z[2*i];
-				for (int j = 0; j < coefficients.size(); j++)
-					func = func + coefficients[j]*pow(t,j);
-
-				if((phase_max != 0.0) && (phase_min != 0.0))
-				{
-					if (func > max)
-					{
-						max = func;
-						phase_max = t;
-					}
-					if (func < min)
-					{
-						min = func;
-						phase_min = t;
-					}
-
-				}
-
-				if(phase_max == 0.0)
-				{
-					phase_max = z[2*i];
-					max = func;
-				}
-				else
-				{
-					phase_min = z[2*i];
-					min = func;
-				}
-			}
-		}
-		//std::cout << i << '\t' << z[2*i] << '\t' << z[2*i+1] << std::endl;
-    }
-
-	double t = phase_max;
-	double fit = 0.0;
-	for (int j = 0; j < coefficients.size(); j++)
-		fit = fit + coefficients[j]*pow(t,j);
-
-	max = fit;
-	
-	t = phase_min;
-	fit = 0.0;
-	for (int j = 0; j < coefficients.size(); j++)
-		fit = fit + coefficients[j]*pow(t,j);
-
-	min = fit;
-
-	for (int i = 0; i < (n-1)*2; i++)
-	{
-		if ()
-		{
-		}
-	}
-
-	delete[] a;
-	delete[] z;
-}
-*/
 
 void find_max(std::vector<double> x_col,
 		      std::vector<double> y_col,
@@ -165,6 +69,9 @@ void find_max(std::vector<double> x_col,
 		fout << t << '\t'  << fit << std::endl;
 
 	}
+	int nn = x_col.size(); 
+	double * data = new double[nn];
+	double mean = gsl_stats_mean(data, 1, nn);
 
 	gsl_multifit_linear_free(ws);
 	gsl_matrix_free(X);
@@ -174,45 +81,21 @@ void find_max(std::vector<double> x_col,
 
 	phase_max = -B/(2.0*C);
 	max = A + phase_max*B + pow(phase_max,2)*C;
-
+	
+	/* check if max is realistic */
 	/*
-    n = p;
-	double *a = new double[n];
-	double *z = new double[(n-1)*2];
-
-	for (int i = 1; i < n; i++)
+	if (max < mean) 
 	{
-		a[i-1] = double(i)*coefficients[i-1];
-		//std::cout << a[i-1] << std::endl;
-	}
-
-	std::cout << "shits on fire" << std::endl;
-	gsl_poly_complex_workspace * w 
-		= gsl_poly_complex_workspace_alloc (n);
-	gsl_poly_complex_solve (a, n, w, z);
-	gsl_poly_complex_workspace_free (w);
-
-	std::cout << "made it  here" << std::endl;
-	for (int i = 0; i < n-1; i++)
-    {
-		std::cout << z[2*i] << '\t' << z[2*i+1] << std::endl;
-		if(z[2*i+1] == 0.0)
+		for (int i = 0; i < nn; i++)
 		{
-			if((z[2*i] < x_col[index+window]) && (z[2*i] > x_col[index-window]))
+			std::cout << y_col[i] << '\t' << x_col[i] << '\t' << max << std::endl;
+			if(y_col[i] > max)
 			{
-				double func = 0.0;
-				double t = z[2*i];
-				for (int j = 0; j < p; j++)
-					func = func + gsl_vector_get(c,j)*pow(t,j);
-
-				min = func;
-				phase_min = t;
-
+				max = y_col[i];
+				phase_max = x_col[i];
 			}
 		}
-    }
-
-
+	}
 	*/
 
 }
@@ -284,6 +167,13 @@ void find_min(std::vector<double> x_col,
 	phase_min = -B/(2.0*C);
 	min = A + phase_min*B + pow(phase_min,2)*C;
 
+
+}
+
+void find_sub_inlet_pressure()
+{
+}
+
 	/*
     n = p;
 	double *a = new double[n];
@@ -324,8 +214,42 @@ void find_min(std::vector<double> x_col,
 
 	*/
 
-}
+	/*
+    n = p;
+	double *a = new double[n];
+	double *z = new double[(n-1)*2];
 
-void find_sub_inlet_pressure()
-{
-}
+	for (int i = 1; i < n; i++)
+	{
+		a[i-1] = double(i)*coefficients[i-1];
+		//std::cout << a[i-1] << std::endl;
+	}
+
+	std::cout << "shits on fire" << std::endl;
+	gsl_poly_complex_workspace * w 
+		= gsl_poly_complex_workspace_alloc (n);
+	gsl_poly_complex_solve (a, n, w, z);
+	gsl_poly_complex_workspace_free (w);
+
+	std::cout << "made it  here" << std::endl;
+	for (int i = 0; i < n-1; i++)
+    {
+		std::cout << z[2*i] << '\t' << z[2*i+1] << std::endl;
+		if(z[2*i+1] == 0.0)
+		{
+			if((z[2*i] < x_col[index+window]) && (z[2*i] > x_col[index-window]))
+			{
+				double func = 0.0;
+				double t = z[2*i];
+				for (int j = 0; j < p; j++)
+					func = func + gsl_vector_get(c,j)*pow(t,j);
+
+				min = func;
+				phase_min = t;
+
+			}
+		}
+    }
+
+
+	*/

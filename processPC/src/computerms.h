@@ -5,4 +5,6 @@
 
 double compute_prms(DataFileInput &cInput, double mean);
 
+double compute_pmean(DataFileInput &cInput, double mean);
+
 #endif
