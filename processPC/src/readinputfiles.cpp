@@ -145,7 +145,7 @@ void read_settings_file(std::string file,
 				boost::trim(value);
 				if(setting=="findPeaks")
 					optionsMenu.dataAnalysisMenu.findPeaks=value;
-				if(setting=="averageCyle")
+				if(setting=="averageCycle")
 					optionsMenu.dataAnalysisMenu.averageCycle=value;
 				if(setting=="freqSpectrum")
 					optionsMenu.dataAnalysisMenu.freqSpectrum=value;
